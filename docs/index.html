@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Invoice Parse Agent Proof</title>
+    <style>
+      :root {
+        --ink: #151a1f;
+        --muted: #52606b;
+        --line: #d8dee4;
+        --bg: #f6f8fa;
+        --panel: #ffffff;
+        --accent: #16745f;
+        --accent-2: #a45212;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      header {
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+      }
+      .shell {
+        width: min(1080px, calc(100vw - 32px));
+        margin: 0 auto;
+      }
+      .hero {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 24px;
+        align-items: center;
+        padding: 26px 0;
+      }
+      h1, h2, h3, p { margin: 0; }
+      h1 { font-size: 30px; letter-spacing: 0; }
+      h2 { font-size: 17px; letter-spacing: 0; }
+      h3 { font-size: 13px; letter-spacing: 0; color: var(--muted); text-transform: uppercase; }
+      .sub { color: var(--muted); max-width: 760px; margin-top: 6px; }
+      a { color: var(--accent); font-weight: 700; text-decoration: none; }
+      .badge {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: #fafdff;
+        white-space: nowrap;
+      }
+      main {
+        display: grid;
+        gap: 16px;
+        padding: 16px 0 32px;
+      }
+      section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 16px;
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .metric {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        background: #fbfcfd;
+      }
+      .metric strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 28px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th, td {
+        padding: 8px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+      th { color: var(--muted); }
+      pre {
+        margin: 0;
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px;
+        background: #0f1720;
+        color: #e6edf3;
+        font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      }
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .step {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px;
+        min-height: 86px;
+        background: #fbfcfd;
+      }
+      .step strong { display: block; margin-bottom: 6px; }
+      @media (max-width: 860px) {
+        .hero, .grid { grid-template-columns: 1fr; }
+        .metrics, .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="shell hero">
+        <div>
+          <h1>Invoice Parse Agent Proof Dashboard</h1>
+          <p class="sub">Public proof for OCR, document parsing, structured extraction, eval scoring, Docker deployability, and n8n process automation.</p>
+        </div>
+        <div class="badge"><a href="https://github.com/mj-deving/invoice-parse-agent">GitHub repo</a></div>
+      </div>
+    </header>
+    <main class="shell">
+      <section>
+        <div class="metrics">
+          <div class="metric"><h3>Field Hit Rate</h3><strong>100%</strong></div>
+          <div class="metric"><h3>Fields Checked</h3><strong>67</strong></div>
+          <div class="metric"><h3>Fixture Invoices</h3><strong>5</strong></div>
+          <div class="metric"><h3>Tests</h3><strong>7/7</strong></div>
+        </div>
+      </section>
+      <section>
+        <h2>Workflow Surface</h2>
+        <p class="sub">The shipped app includes a live service dashboard at <code>/dashboard</code> when run from Docker or Bun.</p>
+        <p class="sub">Rendered dashboard proof: <a href="./proof/dashboard-local.png">dashboard-local.png</a></p>
+        <div class="flow" style="margin-top: 12px;">
+          <div class="step"><strong>PDF/input</strong>URL, multipart PDF, image, raw body, or test text.</div>
+          <div class="step"><strong>OCR</strong>Embedded PDF text first, Tesseract.js for scanned inputs.</div>
+          <div class="step"><strong>Fallback</strong>Google Vision / Document AI boundary documented and isolated.</div>
+          <div class="step"><strong>Extraction</strong>Claude Haiku 4.5 schema-driven JSON, zod validated.</div>
+          <div class="step"><strong>Automation</strong>n8n webhook template with confidence gate.</div>
+        </div>
+      </section>
+      <section>
+        <h2>Dashboard Screenshot</h2>
+        <img src="./proof/dashboard-local.png" alt="Invoice Parse Agent dashboard with eval metrics and parsing controls" style="width: 100%; border: 1px solid var(--line); border-radius: 8px; margin-top: 12px;" />
+      </section>
+      <div class="grid">
+        <section>
+          <h2>Eval Proof</h2>
+          <table>
+            <thead><tr><th>Case</th><th>Hit Rate</th><th>Misses</th></tr></thead>
+            <tbody>
+              <tr><td>mustard-logistics-001</td><td>100%</td><td>none</td></tr>
+              <tr><td>northsea-parts-1042</td><td>100%</td><td>none</td></tr>
+              <tr><td>rhein-freight-778</td><td>100%</td><td>none</td></tr>
+              <tr><td>baltic-coldchain-512</td><td>100%</td><td>none</td></tr>
+              <tr><td>alpine-spares-9201</td><td>100%</td><td>none</td></tr>
+            </tbody>
+          </table>
+        </section>
+        <section>
+          <h2>Run It</h2>
+          <pre>docker build -t invoice-parse-agent .
+docker run --rm -p 8787:8787 \
+  -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+  -e ANTHROPIC_MODEL=claude-haiku-4-5 \
+  invoice-parse-agent
+
+open http://localhost:8787/dashboard</pre>
+        </section>
+      </div>
+      <section>
+        <h2>Verification Snapshot</h2>
+        <pre>{
+  "ci": "passed",
+  "typecheck": "passed",
+  "tests": "7 passed",
+  "docker": "build passed and /eval smoke passed",
+  "eval": {
+    "fields": 67,
+    "hits": 67,
+    "fieldHitRate": 1,
+    "averageConfidence": 0.72
+  }
+}</pre>
+      </section>
+    </main>
+  </body>
+</html>

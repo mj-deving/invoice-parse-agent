@@ -1,5 +1,6 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { dashboardRequest } from "./api/dashboard";
 import { evalRequest } from "./api/eval";
 import { parseInvoiceRequest } from "./api/parse";
 
@@ -8,9 +9,10 @@ export const app = new Hono();
 app.get("/", (c) =>
   c.json({
     service: "invoice-parse-agent",
-    routes: ["POST /parse", "GET /eval"]
+    routes: ["GET /dashboard", "POST /parse", "GET /eval"]
   })
 );
+app.get("/dashboard", dashboardRequest);
 app.post("/parse", parseInvoiceRequest);
 app.get("/eval", evalRequest);
 

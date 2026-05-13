@@ -10,6 +10,10 @@ curl -s -X POST http://localhost:8787/parse \
 
 The API extracts document text, asks Claude Haiku 4.5 for schema-constrained invoice JSON, and reports evaluation accuracy against a small ground-truth corpus.
 
+Live proof dashboard: https://mj-deving.github.io/invoice-parse-agent/
+
+Rendered dashboard proof: `docs/proof/dashboard-local.png`
+
 ## Why this exists
 
 This is a hiring-proof repo for invoice, order, and logistics process automation. It does not claim to support every document. It targets semi-structured B2B invoices where the fields are predictable but layout and OCR noise vary.
@@ -58,6 +62,7 @@ bun run dev
 Open:
 
 ```bash
+open http://localhost:8787/dashboard
 curl http://localhost:8787/eval
 curl -X POST http://localhost:8787/parse \
   -F "file=@corpus/mustard-logistics-001.pdf"
@@ -116,6 +121,10 @@ Response shape:
 ### `GET /eval`
 
 Runs the ground-truth corpus and returns per-case misses plus aggregate field hit rate.
+
+### `GET /dashboard`
+
+Serves a browser dashboard for upload, sample parsing, eval metrics, JSON output, and operational fit.
 
 Current deterministic eval output:
 
