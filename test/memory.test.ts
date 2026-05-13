@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { vectorizeText } from "../src/memory/embedding";
+import { embedText, vectorizeText } from "../src/memory/embedding";
 import { formatMemoryForPrompt } from "../src/memory/qdrant";
 
 describe("Qdrant memory helpers", () => {
@@ -8,6 +8,13 @@ describe("Qdrant memory helpers", () => {
     const second = vectorizeText("Vendor: Mustard Yellow Logistics Total EUR 370.09");
     expect(first).toEqual(second);
     expect(first).toHaveLength(64);
+  });
+
+  test("defaults to local hash embeddings without external credentials", async () => {
+    const embedding = await embedText("Vendor: Mustard Yellow Logistics Total EUR 370.09");
+    expect(embedding.provider).toBe("hash");
+    expect(embedding.model).toBe("local-hash-v1");
+    expect(embedding.vector).toHaveLength(64);
   });
 
   test("formats retrieved invoice memory for Claude context", () => {

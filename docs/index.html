@@ -138,7 +138,7 @@
           <div class="metric"><h3>Field Hit Rate</h3><strong>100%</strong></div>
           <div class="metric"><h3>Fields Checked</h3><strong>67</strong></div>
           <div class="metric"><h3>Fixture Invoices</h3><strong>5</strong></div>
-          <div class="metric"><h3>Tests</h3><strong>10/10</strong></div>
+          <div class="metric"><h3>Tests</h3><strong>12/12</strong></div>
         </div>
       </section>
       <section>
@@ -147,9 +147,9 @@
         <p class="sub">Rendered dashboard proof: <a href="./proof/dashboard-local.png">dashboard-local.png</a></p>
         <div class="flow" style="margin-top: 12px;">
           <div class="step"><strong>PDF/input</strong>URL, multipart PDF, image, raw body, or test text.</div>
-          <div class="step"><strong>OCR</strong>Embedded PDF text first, Tesseract.js for scanned inputs.</div>
+          <div class="step"><strong>OCR</strong>Embedded PDF text first, Tesseract.js scanned-image smoke tested.</div>
           <div class="step"><strong>Fallback</strong>Google Vision / Document AI boundary documented and isolated.</div>
-          <div class="step"><strong>Memory</strong>Qdrant retrieves similar prior invoices and stores parsed results.</div>
+          <div class="step"><strong>Memory</strong>Qdrant retrieves similar prior invoices with hash or OpenAI embeddings.</div>
           <div class="step"><strong>Extraction</strong>Claude Haiku 4.5 schema-driven JSON, zod validated.</div>
           <div class="step"><strong>Automation</strong>n8n webhook template with confidence gate.</div>
         </div>
@@ -189,9 +189,10 @@ open http://localhost:8787/dashboard</pre>
         <pre>{
   "ci": "passed",
   "typecheck": "passed",
-  "tests": "10 passed",
+  "tests": "12 passed",
   "docker": "build passed and /eval smoke passed",
   "qdrant": "optional vector memory for similar invoice retrieval",
+  "ocr": "Tesseract.js scanned-image fixture passed locally",
   "eval": {
     "fields": 67,
     "hits": 67,

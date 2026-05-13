@@ -59,6 +59,8 @@ Qdrant is used as the optional vector memory layer, not as a replacement for OCR
 
 The demo uses deterministic local hash vectors so the repo works without another model provider. In production, replace `src/memory/embedding.ts` with OpenAI, Voyage, Cohere, or local embedding vectors and keep the Qdrant storage/search contract unchanged.
 
+Set `EMBEDDING_PROVIDER=openai` with `OPENAI_API_KEY` to use production OpenAI embeddings for Qdrant memory. The default `hash` provider stays deterministic for CI and local demos.
+
 ## Run
 
 ```bash
@@ -84,6 +86,8 @@ ANTHROPIC_MODEL=claude-haiku-4-5
 VISION_API_ENABLED=false
 QDRANT_URL=http://localhost:6333
 QDRANT_COLLECTION=invoice_parse_agent
+EMBEDDING_PROVIDER=hash
+OPENAI_API_KEY=
 ```
 
 Without `ANTHROPIC_API_KEY`, the app uses a deterministic extractor so tests and demos stay reproducible.
@@ -172,3 +176,5 @@ bun run eval
 ## Corpus
 
 The corpus uses synthetic invoices to avoid licensing ambiguity and to keep ground truth exact. The fixture names and fields are logistics-oriented: freight, cold chain, parts, terminal handling, and customs preparation.
+
+`corpus/mustard-logistics-001-scan.png` is a rendered scanned-image fixture. The OCR smoke test runs the actual Tesseract.js wrapper against it and checks confidence plus recovered invoice identifiers.

@@ -1,5 +1,5 @@
 import type { Invoice } from "../schema";
-import { embeddingConfig, vectorizeText } from "./embedding";
+import { embedText, embeddingDistance } from "./embedding";
 import { randomUUID } from "node:crypto";
 
 export interface MemoryHit {
@@ -69,7 +69,7 @@ export function isQdrantEnabled(): boolean {
   return Boolean(qdrantUrl());
 }
 
-export async function ensureInvoiceCollection(collection = collectionName()) {
+export async function ensureInvoiceCollection(collection = collectionName(), vectorSize: number) {
   if (!isQdrantEnabled()) {
     return;
   }
@@ -78,13 +78,20 @@ export async function ensureInvoiceCollection(collection = collectionName()) {
     headers: headers()
   });
   if (exists.ok) {
+    const body = (await exists.json()) as { result?: { config?: { params?: { vectors?: { size?: number } } } } };
+    const existingSize = body.result?.config?.params?.vectors?.size;
+    if (existingSize !== undefined && existingSize !== vectorSize) {
+      throw new Error(
+        `Qdrant collection '${collection}' uses vector size ${existingSize}, but current embedding size is ${vectorSize}. Use a new QDRANT_COLLECTION or recreate the collection.`
+      );
+    }
     return;
   }
 
   const body = {
     vectors: {
-      size: embeddingConfig.size,
-      distance: embeddingConfig.distance
+      size: vectorSize,
+      distance: embeddingDistance
     }
   };
   await request(`/collections/${encodeURIComponent(collection)}`, {
@@ -99,11 +106,12 @@ export async function searchInvoiceMemory(text: string, limit = 3): Promise<Memo
   }
 
   const collection = collectionName();
-  await ensureInvoiceCollection(collection);
+  const embedding = await embedText(text);
+  await ensureInvoiceCollection(collection, embedding.vector.length);
   const response = (await request(`/collections/${encodeURIComponent(collection)}/points/search`, {
     method: "POST",
     body: JSON.stringify({
-      vector: vectorizeText(text),
+      vector: embedding.vector,
       limit,
       with_payload: true
     })
@@ -141,7 +149,8 @@ export async function storeInvoiceMemory(text: string, invoice: Invoice): Promis
   }
 
   const collection = collectionName();
-  await ensureInvoiceCollection(collection);
+  const embedding = await embedText(text);
+  await ensureInvoiceCollection(collection, embedding.vector.length);
   const id = randomUUID();
   await request(`/collections/${encodeURIComponent(collection)}/points?wait=true`, {
     method: "PUT",
@@ -149,10 +158,12 @@ export async function storeInvoiceMemory(text: string, invoice: Invoice): Promis
       points: [
         {
           id,
-          vector: vectorizeText(text),
+          vector: embedding.vector,
           payload: {
             vendor: invoice.vendor.name,
             invoiceNumber: invoice.invoiceNumber,
+            embeddingProvider: embedding.provider,
+            embeddingModel: embedding.model,
             textPreview: text.slice(0, 600),
             invoice
           }
