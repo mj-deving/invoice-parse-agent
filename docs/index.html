@@ -138,7 +138,7 @@
           <div class="metric"><h3>Field Hit Rate</h3><strong>100%</strong></div>
           <div class="metric"><h3>Fields Checked</h3><strong>67</strong></div>
           <div class="metric"><h3>Fixture Invoices</h3><strong>5</strong></div>
-          <div class="metric"><h3>Tests</h3><strong>7/7</strong></div>
+          <div class="metric"><h3>Tests</h3><strong>10/10</strong></div>
         </div>
       </section>
       <section>
@@ -149,6 +149,7 @@
           <div class="step"><strong>PDF/input</strong>URL, multipart PDF, image, raw body, or test text.</div>
           <div class="step"><strong>OCR</strong>Embedded PDF text first, Tesseract.js for scanned inputs.</div>
           <div class="step"><strong>Fallback</strong>Google Vision / Document AI boundary documented and isolated.</div>
+          <div class="step"><strong>Memory</strong>Qdrant retrieves similar prior invoices and stores parsed results.</div>
           <div class="step"><strong>Extraction</strong>Claude Haiku 4.5 schema-driven JSON, zod validated.</div>
           <div class="step"><strong>Automation</strong>n8n webhook template with confidence gate.</div>
         </div>
@@ -177,6 +178,7 @@
 docker run --rm -p 8787:8787 \
   -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
   -e ANTHROPIC_MODEL=claude-haiku-4-5 \
+  -e QDRANT_URL=http://host.docker.internal:6333 \
   invoice-parse-agent
 
 open http://localhost:8787/dashboard</pre>
@@ -187,8 +189,9 @@ open http://localhost:8787/dashboard</pre>
         <pre>{
   "ci": "passed",
   "typecheck": "passed",
-  "tests": "7 passed",
+  "tests": "10 passed",
   "docker": "build passed and /eval smoke passed",
+  "qdrant": "optional vector memory for similar invoice retrieval",
   "eval": {
     "fields": 67,
     "hits": 67,

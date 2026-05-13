@@ -1,5 +1,6 @@
 import type { Context } from "hono";
 import { extractInvoice } from "../extract/claude";
+import { searchInvoiceMemory, storeInvoiceMemory } from "../memory/qdrant";
 import { extractTextFromDocument } from "../ocr/tesseract";
 import { ParseResponseSchema } from "../schema";
 
@@ -48,7 +49,9 @@ export async function parseInvoiceRequest(c: Context) {
     const source = await extractTextFromDocument(bytes, contentType, {
       enableVisionFallback: process.env.VISION_API_ENABLED === "true"
     });
-    const invoice = await extractInvoice(source.text);
+    const retrievedMemory = await searchInvoiceMemory(source.text);
+    const invoice = await extractInvoice(source.text, retrievedMemory);
+    const storedMemory = await storeInvoiceMemory(source.text, invoice);
     const response = ParseResponseSchema.parse({
       source: {
         mode: source.mode,
@@ -56,6 +59,14 @@ export async function parseInvoiceRequest(c: Context) {
         bytes: source.bytes
       },
       invoice,
+      memory: retrievedMemory || storedMemory
+        ? {
+            provider: "qdrant",
+            collection: retrievedMemory?.collection ?? storedMemory?.collection ?? "invoice_parse_agent",
+            hits: retrievedMemory?.hits.length ?? 0,
+            stored: storedMemory?.stored
+          }
+        : undefined,
       rawText: source.text
     });
 

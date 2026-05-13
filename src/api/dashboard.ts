@@ -240,6 +240,7 @@ const html = String.raw`<!doctype html>
                 <tbody>
                   <tr><th>Self-host OCR</th><td>Tesseract.js path for Docker deployments.</td></tr>
                   <tr><th>Managed OCR</th><td>Vision/Document AI adapter boundary is explicit.</td></tr>
+                  <tr><th>Memory</th><td>Optional Qdrant retrieval of similar prior invoices.</td></tr>
                   <tr><th>Extraction</th><td>Claude Haiku 4.5 schema-driven JSON with validation.</td></tr>
                   <tr><th>Automation</th><td>n8n webhook template with confidence gate.</td></tr>
                 </tbody>

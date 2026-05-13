@@ -26,7 +26,9 @@ POST /parse
   -> document text layer extraction for embedded-text PDFs
   -> Tesseract.js OCR for image/scanned inputs
   -> optional managed Vision/Document AI adapter boundary
+  -> optional Qdrant retrieval of similar prior invoices
   -> Claude structured extraction
+  -> optional Qdrant storage of parsed invoice memory
   -> zod-validated invoice JSON
 
 GET /eval
@@ -51,6 +53,12 @@ The runtime is Hono on Node via Bun. Cloudflare Workers are useful for routing a
 
 Regex is reliable for the synthetic fixtures and remains as an offline fallback for tests. Claude Haiku 4.5 is used for the real extraction path because OCR output often shifts labels, table order, and address formatting. The schema boundary keeps the LLM output operational: invalid JSON fails fast instead of silently entering an accounting workflow.
 
+### Qdrant vs no document memory
+
+Qdrant is used as the optional vector memory layer, not as a replacement for OCR or structured extraction. When `QDRANT_URL` is configured, `/parse` retrieves similar prior invoices before extraction and stores the parsed result afterward. That gives vendor-specific examples to Claude and creates a reusable memory for recurring suppliers, purchase orders, and logistics documents.
+
+The demo uses deterministic local hash vectors so the repo works without another model provider. In production, replace `src/memory/embedding.ts` with OpenAI, Voyage, Cohere, or local embedding vectors and keep the Qdrant storage/search contract unchanged.
+
 ## Run
 
 ```bash
@@ -74,6 +82,8 @@ Set `.dev.vars` or environment variables:
 ANTHROPIC_API_KEY=sk-ant-api03-...
 ANTHROPIC_MODEL=claude-haiku-4-5
 VISION_API_ENABLED=false
+QDRANT_URL=http://localhost:6333
+QDRANT_COLLECTION=invoice_parse_agent
 ```
 
 Without `ANTHROPIC_API_KEY`, the app uses a deterministic extractor so tests and demos stay reproducible.
@@ -87,6 +97,14 @@ docker run --rm -p 8787:8787 \
   -e ANTHROPIC_MODEL=claude-haiku-4-5 \
   invoice-parse-agent
 ```
+
+With Qdrant:
+
+```bash
+docker compose up --build
+```
+
+The compose stack starts Qdrant on `localhost:6333` and the app on `localhost:8787`.
 
 ## API
 
@@ -104,6 +122,7 @@ Response shape:
 ```json
 {
   "source": { "mode": "pdf-text", "pages": 1, "bytes": 12345 },
+  "memory": { "provider": "qdrant", "collection": "invoice_parse_agent", "hits": 1, "stored": true },
   "invoice": {
     "vendor": { "name": "Mustard Yellow Logistics GmbH" },
     "invoiceNumber": "MYL-2026-001",

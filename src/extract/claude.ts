@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { extractInvoiceDeterministically } from "./fallback";
+import { formatMemoryForPrompt, type MemoryContext } from "../memory/qdrant";
 import { InvoiceSchema, jsonSchemaForPrompt, type Invoice } from "../schema";
 
 function extractJson(text: string): unknown {
@@ -14,7 +15,7 @@ function extractJson(text: string): unknown {
   return JSON.parse(match[0]);
 }
 
-export async function extractInvoice(text: string): Promise<Invoice> {
+export async function extractInvoice(text: string, memory?: MemoryContext): Promise<Invoice> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return extractInvoiceDeterministically(text);
@@ -34,7 +35,7 @@ export async function extractInvoice(text: string): Promise<Invoice> {
         content: [
           {
             type: "text",
-            text: `JSON schema:\n${JSON.stringify(jsonSchemaForPrompt)}\n\nOCR text:\n${text}`
+            text: `JSON schema:\n${JSON.stringify(jsonSchemaForPrompt)}\n\nPrior similar invoice examples from Qdrant:\n${formatMemoryForPrompt(memory)}\n\nOCR text:\n${text}`
           }
         ]
       }

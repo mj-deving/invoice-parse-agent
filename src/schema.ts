@@ -40,6 +40,12 @@ export const ParseResponseSchema = z.object({
     bytes: z.number().int().nonnegative()
   }),
   invoice: InvoiceSchema,
+  memory: z.object({
+    provider: z.literal("qdrant"),
+    collection: z.string(),
+    hits: z.number().int().nonnegative(),
+    stored: z.boolean().optional()
+  }).optional(),
   rawText: z.string()
 });
 
