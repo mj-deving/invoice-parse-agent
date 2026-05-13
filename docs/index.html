@@ -129,7 +129,7 @@
           <h1>Invoice Parse Agent Proof Dashboard</h1>
           <p class="sub">Public proof for OCR, document parsing, structured extraction, eval scoring, Docker deployability, and n8n process automation.</p>
         </div>
-        <div class="badge"><a href="https://github.com/mj-deving/invoice-parse-agent">GitHub repo</a></div>
+        <div class="badge"><a href="https://missioncontrol.mjdeving.com/invoice-parse/dashboard">Live backend</a></div>
       </div>
     </header>
     <main class="shell">
@@ -144,6 +144,7 @@
       <section>
         <h2>Workflow Surface</h2>
         <p class="sub">The shipped app includes a live service dashboard at <code>/dashboard</code> when run from Docker or Bun.</p>
+        <p class="sub">Hosted backend: <a href="https://missioncontrol.mjdeving.com/invoice-parse/dashboard">missioncontrol.mjdeving.com/invoice-parse/dashboard</a></p>
         <p class="sub">Rendered dashboard proof: <a href="./proof/dashboard-local.png">dashboard-local.png</a></p>
         <div class="flow" style="margin-top: 12px;">
           <div class="step"><strong>PDF/input</strong>URL, multipart PDF, image, raw body, or test text.</div>
@@ -182,6 +183,7 @@ docker run --rm -p 8787:8787 \
   invoice-parse-agent
 
 open http://localhost:8787/dashboard</pre>
+          <p class="sub" style="margin-top: 10px;">Hosted API smoke: <code>https://missioncontrol.mjdeving.com/invoice-parse/eval</code></p>
         </section>
       </div>
       <section>

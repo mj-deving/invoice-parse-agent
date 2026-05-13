@@ -268,7 +268,7 @@ const html = String.raw`<!doctype html>
 
       async function parseText() {
         health.textContent = "Parsing text...";
-        const response = await fetch("/parse", {
+        const response = await fetch("./parse", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ text: textArea.value })
@@ -285,7 +285,7 @@ const html = String.raw`<!doctype html>
         const form = new FormData();
         form.append("file", input.files[0]);
         health.textContent = "Parsing upload...";
-        const response = await fetch("/parse", { method: "POST", body: form });
+        const response = await fetch("./parse", { method: "POST", body: form });
         const body = await response.json();
         if (!response.ok) throw new Error(body.error || "Parse failed");
         health.textContent = "Parsed invoice " + body.invoice.invoiceNumber;
@@ -294,7 +294,7 @@ const html = String.raw`<!doctype html>
 
       async function runEval() {
         health.textContent = "Running eval...";
-        const response = await fetch("/eval");
+        const response = await fetch("./eval");
         const body = await response.json();
         if (!response.ok) throw new Error(body.error || "Eval failed");
         const totals = body.totals;

@@ -12,6 +12,8 @@ The API extracts document text, asks Claude Haiku 4.5 for schema-constrained inv
 
 Live proof dashboard: https://mj-deving.github.io/invoice-parse-agent/
 
+Live backend dashboard: https://missioncontrol.mjdeving.com/invoice-parse/dashboard
+
 Rendered dashboard proof: `docs/proof/dashboard-local.png`
 
 ## Why this exists
