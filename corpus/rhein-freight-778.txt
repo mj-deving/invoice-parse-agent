@@ -1,0 +1,9 @@
+Vendor: Rhein Freight Services AG
+Vendor Tax ID: DE812345900
+Customer: Synergy Energy Logistics
+Invoice No: RFS-778
+Invoice Date: 2026-04-28
+Due Date: 2026-05-12
+ITEM 1: ADR transport Cologne to Rotterdam | qty=2 | unit=EUR 410.00 | tax=19% | line=EUR 820.00
+Tax: EUR 155.80
+Total: EUR 975.80

@@ -1,0 +1,10 @@
+Vendor: Baltic Coldchain SIA
+Vendor Tax ID: LV40103999999
+Customer: Nordic Food Trading
+Invoice No: BCC-512
+Invoice Date: 2026-05-05
+Due Date: 2026-05-20
+ITEM 1: Temperature controlled storage | qty=7 | unit=EUR 64.00 | tax=21% | line=EUR 448.00
+ITEM 2: Sensor log export | qty=1 | unit=EUR 24.00 | tax=21% | line=EUR 24.00
+Tax: EUR 99.12
+Total: EUR 571.12

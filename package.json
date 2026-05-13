@@ -1,0 +1,29 @@
+{
+  "name": "invoice-parse-agent",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "OCR and document parsing pipeline for invoice PDFs with structured JSON extraction.",
+  "scripts": {
+    "dev": "bun run src/server.ts",
+    "start": "bun run src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "eval": "bun run src/eval/runEval.ts",
+    "fixtures": "bun run scripts/make-fixtures.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.0",
+    "@hono/node-server": "^1.19.7",
+    "hono": "^4.10.7",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^1.1.1",
+    "tesseract.js": "^6.0.1",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.3",
+    "@types/pdf-parse": "^1.1.5",
+    "typescript": "^5.9.3"
+  }
+}

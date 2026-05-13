@@ -1,0 +1,11 @@
+Vendor: Northsea Parts OU
+Vendor Tax ID: EE102233445
+Vendor Address: Toostuse 44, Tallinn
+Customer: Marius Deving Automation
+Invoice No: NSP-1042
+Invoice Date: 2026-05-02
+Due Date: 2026-05-16
+ITEM 1: Bearing kit BK-88 | qty=4 | unit=EUR 42.50 | tax=22% | line=EUR 170.00
+ITEM 2: Express freight | qty=1 | unit=EUR 38.00 | tax=22% | line=EUR 38.00
+Tax: EUR 45.76
+Total: EUR 253.76

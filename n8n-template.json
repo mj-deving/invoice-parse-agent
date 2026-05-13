@@ -1,0 +1,93 @@
+{
+  "name": "Invoice PDF to structured JSON",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "invoice-parse",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-invoice",
+      "name": "Webhook: incoming invoice",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://invoice-parse-agent:8787/parse",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "invoice"
+            }
+          ]
+        }
+      },
+      "id": "parse-invoice",
+      "name": "Parse invoice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [260, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.invoice.confidence }}",
+              "operation": "largerEqual",
+              "value2": 0.75
+            }
+          ]
+        }
+      },
+      "id": "confidence-gate",
+      "name": "Confidence gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [520, 0]
+    },
+    {
+      "parameters": {
+        "subject": "Invoice parsed: {{$json.invoice.invoiceNumber}}",
+        "text": "Vendor: {{$json.invoice.vendor.name}}\nTotal: {{$json.invoice.total.amount}} {{$json.invoice.total.currency}}\nConfidence: {{$json.invoice.confidence}}"
+      },
+      "id": "email-accounting",
+      "name": "Email accounting",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [780, -80]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-json",
+      "name": "Respond JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [780, 120]
+    }
+  ],
+  "connections": {
+    "Webhook: incoming invoice": {
+      "main": [[{ "node": "Parse invoice", "type": "main", "index": 0 }]]
+    },
+    "Parse invoice": {
+      "main": [[{ "node": "Confidence gate", "type": "main", "index": 0 }]]
+    },
+    "Confidence gate": {
+      "main": [
+        [{ "node": "Email accounting", "type": "main", "index": 0 }],
+        [{ "node": "Respond JSON", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}

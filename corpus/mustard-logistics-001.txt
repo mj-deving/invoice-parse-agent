@@ -1,0 +1,12 @@
+Vendor: Mustard Yellow Logistics GmbH
+Vendor Tax ID: DE317000111
+Vendor Address: Dockstrasse 12, 20457 Hamburg
+Customer: Synergy Energy Logistics
+Customer Address: Harbour Road 8, Tallinn
+Invoice No: MYL-2026-001
+Invoice Date: 2026-04-30
+Due Date: 2026-05-14
+ITEM 1: Pallet handling Hamburg terminal | qty=12 | unit=EUR 18.00 | tax=19% | line=EUR 216.00
+ITEM 2: Customs document preparation | qty=1 | unit=EUR 95.00 | tax=19% | line=EUR 95.00
+Tax: EUR 59.09
+Total: EUR 370.09
