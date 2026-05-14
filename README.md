@@ -31,6 +31,7 @@ POST /parse
   -> optional Qdrant retrieval of similar prior invoices
   -> Claude structured extraction
   -> optional Qdrant storage of parsed invoice memory
+  -> SQLite job ledger and review queue for low-confidence parses
   -> zod-validated invoice JSON
 
 GET /eval
@@ -63,6 +64,10 @@ The demo uses deterministic local hash vectors so the repo works without another
 
 Set `EMBEDDING_PROVIDER=openai` with `OPENAI_API_KEY` to use production OpenAI embeddings for Qdrant memory. The default `hash` provider stays deterministic for CI and local demos.
 
+### Intake desk vs one-shot parsing
+
+The live use case is an invoice intake triage desk. Every parse creates a persisted job in SQLite. Results below `REVIEW_CONFIDENCE_THRESHOLD` enter `needs_review`; the dashboard lets an operator edit the extracted invoice JSON and save it as `reviewed`. Reviewed corrections are stored back into Qdrant, so recurring vendor invoices improve over time.
+
 ## Run
 
 ```bash
@@ -90,6 +95,8 @@ QDRANT_URL=http://localhost:6333
 QDRANT_COLLECTION=invoice_parse_agent
 EMBEDDING_PROVIDER=hash
 OPENAI_API_KEY=
+INVOICE_DB_PATH=data/invoices.sqlite
+REVIEW_CONFIDENCE_THRESHOLD=0.8
 ```
 
 Without `ANTHROPIC_API_KEY`, the app uses a deterministic extractor so tests and demos stay reproducible.
@@ -149,7 +156,19 @@ Runs the ground-truth corpus and returns per-case misses plus aggregate field hi
 
 ### `GET /dashboard`
 
-Serves a browser dashboard for upload, sample parsing, eval metrics, JSON output, and operational fit.
+Serves a browser dashboard for upload, sample parsing, eval metrics, JSON output, review queue, editable corrections, and operational fit.
+
+### `GET /jobs`
+
+Lists recent invoice parse jobs for the review queue.
+
+### `GET /jobs/:id`
+
+Returns one persisted parse job with invoice JSON and raw OCR text.
+
+### `PATCH /jobs/:id`
+
+Accepts reviewed invoice JSON, marks the job `reviewed`, and stores the corrected invoice back into Qdrant when `QDRANT_URL` is configured.
 
 Current deterministic eval output:
 

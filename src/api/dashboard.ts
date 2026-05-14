@@ -170,6 +170,9 @@ const html = String.raw`<!doctype html>
         color: #e6edf3;
         font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
       }
+      #reviewJson {
+        min-height: 300px;
+      }
       .error { color: var(--danger); font-weight: 700; }
       @media (max-width: 900px) {
         main, .grid { grid-template-columns: 1fr; }
@@ -190,28 +193,48 @@ const html = String.raw`<!doctype html>
     </header>
     <div class="shell">
       <main>
-        <section class="stack">
-          <div>
-            <h2>Parse Invoice</h2>
-            <p class="sub">Upload a PDF or parse the sample invoice text.</p>
-          </div>
-          <div class="controls">
-            <label>
-              PDF or image upload
-              <input id="file" type="file" accept=".pdf,image/*,text/plain" />
-            </label>
-            <div class="button-row">
-              <button class="primary" id="parseFile">Parse upload</button>
-              <button id="loadSample">Load sample</button>
-              <button class="warning" id="runEval">Run eval</button>
+        <div class="stack">
+          <section class="stack">
+            <div>
+              <h2>Parse Invoice</h2>
+              <p class="sub">Upload a PDF or parse the sample invoice text.</p>
             </div>
+            <div class="controls">
+              <label>
+                PDF or image upload
+                <input id="file" type="file" accept=".pdf,image/*,text/plain" />
+              </label>
+              <div class="button-row">
+                <button class="primary" id="parseFile">Parse upload</button>
+                <button id="loadSample">Load sample</button>
+                <button class="warning" id="runEval">Run eval</button>
+              </div>
+              <label>
+                Invoice text
+                <textarea id="invoiceText"></textarea>
+              </label>
+              <button class="primary" id="parseText">Parse text</button>
+            </div>
+          </section>
+          <section class="stack">
+            <div>
+              <h2>Review Queue</h2>
+              <p class="sub">Low-confidence parses become review jobs. Saving a correction teaches Qdrant.</p>
+            </div>
+            <div class="button-row">
+              <button id="refreshJobs">Refresh jobs</button>
+              <button class="primary" id="saveReview">Save reviewed JSON</button>
+            </div>
+            <table>
+              <thead><tr><th>Status</th><th>Invoice</th><th>Total</th></tr></thead>
+              <tbody id="jobRows"><tr><td colspan="3">No jobs loaded.</td></tr></tbody>
+            </table>
             <label>
-              Invoice text
-              <textarea id="invoiceText"></textarea>
+              Editable invoice JSON
+              <textarea id="reviewJson"></textarea>
             </label>
-            <button class="primary" id="parseText">Parse text</button>
-          </div>
-        </section>
+          </section>
+        </div>
         <div class="stack">
           <section class="stack">
             <div>
@@ -255,10 +278,27 @@ const html = String.raw`<!doctype html>
       const out = document.getElementById("jsonOut");
       const health = document.getElementById("health");
       const textArea = document.getElementById("invoiceText");
+      const reviewJson = document.getElementById("reviewJson");
       const caseRows = document.getElementById("caseRows");
+      const jobRows = document.getElementById("jobRows");
+      let selectedJobId = null;
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, (char) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;"
+        }[char]));
+      }
 
       function setJson(value) {
         out.textContent = JSON.stringify(value, null, 2);
+        if (value.invoice) {
+          reviewJson.value = JSON.stringify(value.invoice, null, 2);
+          selectedJobId = value.job?.id ?? selectedJobId;
+        }
       }
 
       function setError(error) {
@@ -275,8 +315,9 @@ const html = String.raw`<!doctype html>
         });
         const body = await response.json();
         if (!response.ok) throw new Error(body.error || "Parse failed");
-        health.textContent = "Parsed invoice " + body.invoice.invoiceNumber;
+        health.textContent = "Parsed invoice " + body.invoice.invoiceNumber + (body.job ? " · job " + body.job.status : "");
         setJson(body);
+        await loadJobs();
       }
 
       async function parseFile() {
@@ -288,8 +329,51 @@ const html = String.raw`<!doctype html>
         const response = await fetch("./parse", { method: "POST", body: form });
         const body = await response.json();
         if (!response.ok) throw new Error(body.error || "Parse failed");
-        health.textContent = "Parsed invoice " + body.invoice.invoiceNumber;
+        health.textContent = "Parsed invoice " + body.invoice.invoiceNumber + (body.job ? " · job " + body.job.status : "");
         setJson(body);
+        await loadJobs();
+      }
+
+      async function loadJobs() {
+        const response = await fetch("./jobs?limit=20");
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || "Could not load jobs");
+        if (!body.jobs.length) {
+          jobRows.innerHTML = '<tr><td colspan="3">No jobs yet.</td></tr>';
+          return;
+        }
+        jobRows.innerHTML = body.jobs.map((job) => {
+          const total = job.totalAmount + " " + job.totalCurrency;
+          return '<tr data-id="' + escapeHtml(job.id) + '"><td>' + escapeHtml(job.status) + '</td><td><button data-job="' + escapeHtml(job.id) + '">' + escapeHtml(job.invoiceNumber) + '</button><br>' + escapeHtml(job.vendor) + '</td><td>' + escapeHtml(total) + '</td></tr>';
+        }).join("");
+        jobRows.querySelectorAll("button[data-job]").forEach((button) => {
+          button.addEventListener("click", () => selectJob(button.getAttribute("data-job")).catch(setError));
+        });
+      }
+
+      async function selectJob(id) {
+        const response = await fetch("./jobs/" + encodeURIComponent(id));
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || "Could not load job");
+        selectedJobId = body.job.id;
+        reviewJson.value = JSON.stringify(body.job.invoice, null, 2);
+        setJson(body);
+        health.textContent = "Loaded job " + body.job.invoiceNumber;
+      }
+
+      async function saveReview() {
+        if (!selectedJobId) throw new Error("Select or parse a job first.");
+        const invoice = JSON.parse(reviewJson.value);
+        const response = await fetch("./jobs/" + encodeURIComponent(selectedJobId), {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ invoice, reviewNote: "Reviewed in dashboard" })
+        });
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || "Review save failed");
+        health.textContent = "Reviewed invoice " + body.job.invoiceNumber + " · Qdrant stored";
+        setJson(body);
+        await loadJobs();
       }
 
       async function runEval() {
@@ -317,9 +401,12 @@ const html = String.raw`<!doctype html>
       document.getElementById("parseText").addEventListener("click", () => parseText().catch(setError));
       document.getElementById("parseFile").addEventListener("click", () => parseFile().catch(setError));
       document.getElementById("runEval").addEventListener("click", () => runEval().catch(setError));
+      document.getElementById("refreshJobs").addEventListener("click", () => loadJobs().catch(setError));
+      document.getElementById("saveReview").addEventListener("click", () => saveReview().catch(setError));
 
       textArea.value = sample;
       runEval().catch(setError);
+      loadJobs().catch(setError);
     </script>
   </body>
 </html>`;

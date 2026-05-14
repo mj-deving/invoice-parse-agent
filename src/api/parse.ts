@@ -1,8 +1,9 @@
 import type { Context } from "hono";
 import { extractInvoice } from "../extract/claude";
+import { createJob } from "../jobs/store";
 import { searchInvoiceMemory, storeInvoiceMemory } from "../memory/qdrant";
 import { extractTextFromDocument } from "../ocr/tesseract";
-import { ParseResponseSchema } from "../schema";
+import { ParseResponseSchema, type ParseResponse } from "../schema";
 
 async function readRequestBytes(c: Context): Promise<{ bytes: Uint8Array; contentType: string | undefined }> {
   const contentType = c.req.header("content-type");
@@ -52,7 +53,7 @@ export async function parseInvoiceRequest(c: Context) {
     const retrievedMemory = await searchInvoiceMemory(source.text);
     const invoice = await extractInvoice(source.text, retrievedMemory);
     const storedMemory = await storeInvoiceMemory(source.text, invoice);
-    const response = ParseResponseSchema.parse({
+    const parseWithoutJob = ParseResponseSchema.parse({
       source: {
         mode: source.mode,
         pages: source.pages,
@@ -68,6 +69,15 @@ export async function parseInvoiceRequest(c: Context) {
           }
         : undefined,
       rawText: source.text
+    }) as ParseResponse;
+    const job = createJob(parseWithoutJob);
+    const response = ParseResponseSchema.parse({
+      ...parseWithoutJob,
+      job: {
+        id: job.id,
+        status: job.status,
+        reviewUrl: `/jobs/${job.id}`
+      }
     });
 
     return c.json(response);

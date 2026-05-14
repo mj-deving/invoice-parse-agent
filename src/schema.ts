@@ -46,6 +46,11 @@ export const ParseResponseSchema = z.object({
     hits: z.number().int().nonnegative(),
     stored: z.boolean().optional()
   }).optional(),
+  job: z.object({
+    id: z.string(),
+    status: z.enum(["parsed", "needs_review", "reviewed"]),
+    reviewUrl: z.string()
+  }).optional(),
   rawText: z.string()
 });
 

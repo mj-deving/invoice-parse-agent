@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { app } from "../src/server";
+import { resetJobsForTests } from "../src/jobs/store";
 
 const text = `Vendor: API Freight
 Invoice No: API-7
@@ -10,6 +11,7 @@ Total: EUR 11.90`;
 
 describe("HTTP API", () => {
   test("POST /parse accepts JSON text and returns structured invoice JSON", async () => {
+    resetJobsForTests();
     const response = await app.request("/parse", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -19,6 +21,7 @@ describe("HTTP API", () => {
     const body = await response.json();
     expect(body.invoice.invoiceNumber).toBe("API-7");
     expect(body.source.mode).toBe("plain-text");
+    expect(typeof body.job.id).toBe("string");
   });
 
   test("GET /eval returns aggregate hit-rate report", async () => {

@@ -138,7 +138,7 @@
           <div class="metric"><h3>Field Hit Rate</h3><strong>100%</strong></div>
           <div class="metric"><h3>Fields Checked</h3><strong>67</strong></div>
           <div class="metric"><h3>Fixture Invoices</h3><strong>5</strong></div>
-          <div class="metric"><h3>Tests</h3><strong>12/12</strong></div>
+          <div class="metric"><h3>Tests</h3><strong>14/14</strong></div>
         </div>
       </section>
       <section>
@@ -152,7 +152,7 @@
           <div class="step"><strong>Fallback</strong>Google Vision / Document AI boundary documented and isolated.</div>
           <div class="step"><strong>Memory</strong>Qdrant retrieves similar prior invoices with hash or OpenAI embeddings.</div>
           <div class="step"><strong>Extraction</strong>Claude Haiku 4.5 schema-driven JSON, zod validated.</div>
-          <div class="step"><strong>Automation</strong>n8n webhook template with confidence gate.</div>
+          <div class="step"><strong>Review</strong>SQLite job ledger and editable low-confidence review queue.</div>
         </div>
       </section>
       <section>
@@ -191,10 +191,11 @@ open http://localhost:8787/dashboard</pre>
         <pre>{
   "ci": "passed",
   "typecheck": "passed",
-  "tests": "12 passed",
+  "tests": "14 passed",
   "docker": "build passed and /eval smoke passed",
   "qdrant": "optional vector memory for similar invoice retrieval",
   "ocr": "Tesseract.js scanned-image fixture passed locally",
+  "review": "parse jobs persist to SQLite and reviewed corrections teach Qdrant",
   "eval": {
     "fields": 67,
     "hits": 67,
