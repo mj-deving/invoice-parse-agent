@@ -18,7 +18,11 @@ Rendered dashboard proof: `docs/proof/dashboard-local.png`
 
 ## Why this exists
 
-This is a hiring-proof repo for invoice, order, and logistics process automation. It does not claim to support every document. It targets semi-structured B2B invoices where the fields are predictable but layout and OCR noise vary.
+Invoice processing is still full of manual handoffs: PDFs arrive by email or webhook, OCR output is noisy, vendor layouts vary, and low-confidence fields need human review before they can enter accounting or logistics workflows.
+
+This project shows a practical intake pipeline for that workflow. It turns invoice PDFs and scans into structured JSON, scores extraction quality against ground truth, keeps a review queue for uncertain results, and stores reviewed corrections as vendor memory so recurring documents become easier to process over time.
+
+The scope is intentionally narrow: semi-structured B2B invoices for logistics, orders, and supplier operations. The goal is not universal document understanding; it is a reliable automation loop for a common back-office process.
 
 ## Architecture
 
