@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 740" role="img" aria-labelledby="ipa-title ipa-desc">
+  <title id="ipa-title">Invoice Parse Agent Pipeline</title>
+  <desc id="ipa-desc">PDF or image input flows through text extraction or Tesseract OCR, Qdrant memory retrieval, Claude Haiku schema-constrained extraction, Zod validation, and into the SQLite job ledger or low-confidence review queue.</desc>
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f0f1a"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+    <marker id="arr-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#3b82f6"/>
+    </marker>
+    <marker id="arr-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#10b981"/>
+    </marker>
+    <marker id="arr-purple" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#a855f7"/>
+    </marker>
+    <marker id="arr-orange" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#f97316"/>
+    </marker>
+    <marker id="arr-gold" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#eab308"/>
+    </marker>
+    <filter id="glow-purple" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-green" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="960" height="740" fill="url(#bg-grad)"/>
+
+  <text x="480" y="36" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="17" font-weight="700" fill="#e2e8f0" letter-spacing="0.02em">Invoice Parse Agent -- Pipeline</text>
+
+  <rect x="360" y="58" width="240" height="50" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="480" y="80" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="13" font-weight="700" fill="#e2e8f0">PDF / Image Input</text>
+  <text x="480" y="97" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="11" fill="#94a3b8">POST /parse  |  URL  multipart  raw body</text>
+  <path stroke="#3b82f6" stroke-width="1.5" fill="none" marker-end="url(#arr-blue)" d="M450,108 L300,136"/>
+  <rect x="176" y="114" width="90" height="14" rx="3" fill="#0f0f1a" opacity="0.9"/>
+  <text x="221" y="125" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#3b82f6">embedded text</text>
+  <rect x="200" y="138" width="200" height="50" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="300" y="160" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="12" font-weight="700" fill="#e2e8f0">Text Extraction</text>
+  <text x="300" y="177" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#94a3b8">PDF text layer (embedded)</text>
+  <path stroke="#f97316" stroke-width="1.5" fill="none" marker-end="url(#arr-orange)" d="M510,108 L660,136"/>
+  <rect x="566" y="114" width="88" height="14" rx="3" fill="#0f0f1a" opacity="0.9"/>
+  <text x="610" y="125" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#f97316">image / scan</text>
+  <rect x="560" y="138" width="200" height="50" rx="6" fill="#1c1917" stroke="#f97316" stroke-width="1.5"/>
+  <text x="660" y="160" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="12" font-weight="700" fill="#e2e8f0">Tesseract OCR</text>
+  <text x="660" y="177" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#94a3b8">Tesseract.js  |  self-hosted</text>
+  <path stroke="#3b82f6" stroke-width="1.5" fill="none" marker-end="url(#arr-blue)" d="M300,188 L460,216"/>
+  <path stroke="#f97316" stroke-width="1.5" fill="none" marker-end="url(#arr-orange)" d="M660,188 L500,216"/>
+  <rect x="360" y="218" width="240" height="50" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+  <text x="480" y="240" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="13" font-weight="700" fill="#e2e8f0">Raw Text</text>
+  <text x="480" y="257" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="11" fill="#94a3b8">normalized document text</text>
+  <path stroke="#10b981" stroke-width="2" fill="none" marker-end="url(#arr-green)" d="M480,268 L480,296"/>
+  <rect x="360" y="298" width="240" height="50" rx="6" fill="#052e16" stroke="#10b981" stroke-width="1.5"/>
+  <text x="480" y="320" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="13" font-weight="700" fill="#10b981">Qdrant Memory</text>
+  <text x="480" y="337" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="11" fill="#94a3b8">retrieve prior invoices  /  vendor memory</text>
+  <rect x="720" y="298" width="170" height="50" rx="6" fill="#052e16" stroke="#10b981" stroke-width="1"/>
+  <text x="805" y="320" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="12" font-weight="700" fill="#10b981">Qdrant</text>
+  <text x="805" y="337" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#94a3b8">vector store</text>
+  <path stroke="#10b981" stroke-width="1.5" fill="none" stroke-dasharray="5,3" marker-end="url(#arr-green)" d="M720,323 L602,323"/>
+  <rect x="620" y="312" width="98" height="14" rx="3" fill="#0f0f1a" opacity="0.9"/>
+  <text x="669" y="323" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#10b981">similar invoices</text>
+  <path stroke="#a855f7" stroke-width="2" fill="none" marker-end="url(#arr-purple)" d="M480,348 L480,396"/>
+  <rect x="360" y="398" width="240" height="50" rx="6" fill="#1e1b4b" stroke="#a855f7" stroke-width="2" filter="url(#glow-purple)"/>
+  <text x="480" y="420" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="13" font-weight="700" fill="#e2e8f0">Claude Haiku</text>
+  <text x="480" y="437" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="11" fill="#a855f7">schema-constrained extraction</text>
+  <path stroke="#10b981" stroke-width="1" stroke-dasharray="4,3" fill="none" marker-end="url(#arr-green)" d="M600,428 C820,428 835,318 890,328"/>
+  <rect x="790" y="412" width="80" height="14" rx="3" fill="#0f0f1a" opacity="0.9"/>
+  <text x="830" y="423" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#10b981">store result</text>
+  <path stroke="#a855f7" stroke-width="2" fill="none" marker-end="url(#arr-purple)" d="M480,448 L480,486"/>
+  <rect x="360" y="488" width="240" height="50" rx="6" fill="#0f172a" stroke="#eab308" stroke-width="1.5"/>
+  <text x="480" y="510" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="13" font-weight="700" fill="#eab308">Zod Validation</text>
+  <text x="480" y="527" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="11" fill="#94a3b8">schema gate  |  invalid JSON fails fast</text>
+  <path stroke="#3b82f6" stroke-width="2" fill="none" marker-end="url(#arr-blue)" d="M480,538 L480,576"/>
+  <rect x="200" y="578" width="230" height="60" rx="6" fill="#052e16" stroke="#10b981" stroke-width="1.5" filter="url(#glow-green)"/>
+  <text x="315" y="600" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="12" font-weight="700" fill="#10b981">SQLite Job Ledger</text>
+  <text x="315" y="617" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#94a3b8">persisted parse jobs</text>
+  <text x="315" y="633" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#94a3b8">GET /jobs  |  GET /jobs/:id</text>
+  <rect x="530" y="578" width="230" height="60" rx="6" fill="#1c0a00" stroke="#f97316" stroke-width="1.5"/>
+  <text x="645" y="600" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="12" font-weight="700" fill="#f97316">Review Queue</text>
+  <text x="645" y="617" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#94a3b8">confidence &lt; threshold</text>
+  <text x="645" y="633" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#94a3b8">PATCH /jobs/:id  reviewed</text>
+  <path stroke="#3b82f6" stroke-width="1.5" fill="none" marker-end="url(#arr-blue)" d="M450,538 L315,576"/>
+  <path stroke="#f97316" stroke-width="1.5" fill="none" marker-end="url(#arr-orange)" d="M510,538 L645,576"/>
+  <rect x="270" y="544" width="80" height="14" rx="3" fill="#0f0f1a" opacity="0.9"/>
+  <text x="310" y="555" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#3b82f6">high confidence</text>
+  <rect x="562" y="544" width="98" height="14" rx="3" fill="#0f0f1a" opacity="0.9"/>
+  <text x="611" y="555" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#f97316">low confidence</text>
+  <path stroke="#10b981" stroke-width="1" stroke-dasharray="4,3" fill="none" marker-end="url(#arr-green)" d="M760,608 C840,608 850,343 890,338"/>
+  <rect x="760" y="592" width="98" height="14" rx="3" fill="#0f0f1a" opacity="0.9"/>
+  <text x="809" y="603" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#10b981">correction stored</text>
+  <rect x="60" y="670" width="840" height="55" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <text x="480" y="684" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="11" font-weight="700" fill="#475569">LEGEND</text>
+  <line x1="90" y1="703" x2="116" y2="703" stroke="#3b82f6" stroke-width="2"/>
+  <text x="121" y="707" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#94a3b8">primary data flow</text>
+  <line x1="252" y1="703" x2="278" y2="703" stroke="#f97316" stroke-width="2"/>
+  <text x="283" y="707" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#94a3b8">OCR / low-conf path</text>
+  <line x1="414" y1="703" x2="440" y2="703" stroke="#10b981" stroke-width="2" stroke-dasharray="5,3"/>
+  <text x="445" y="707" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#94a3b8">memory read/write</text>
+  <line x1="576" y1="703" x2="602" y2="703" stroke="#a855f7" stroke-width="2"/>
+  <text x="607" y="707" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#94a3b8">LLM extraction</text>
+  <line x1="738" y1="703" x2="764" y2="703" stroke="#eab308" stroke-width="2"/>
+  <text x="769" y="707" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#94a3b8">validation gate</text>
+  <text x="480" y="722" text-anchor="middle" font-family="SF Mono,Fira Code,Cascadia Code,Courier New,monospace" font-size="10" fill="#10b981">reviewed corrections feed back into Qdrant -- recurring vendors improve over time</text>
+</svg>

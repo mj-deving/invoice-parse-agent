@@ -26,6 +26,8 @@ The scope is intentionally narrow: semi-structured B2B invoices for logistics, o
 
 ## Architecture
 
+![Invoice Parse Agent pipeline — PDF/image through OCR or text extraction, Qdrant memory retrieval, Claude Haiku extraction, Zod validation, SQLite job ledger and review queue](docs/diagrams/pipeline.png)
+
 ```text
 POST /parse
   URL or multipart PDF/image
