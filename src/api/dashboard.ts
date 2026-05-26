@@ -18,261 +18,715 @@ const html = String.raw`<!doctype html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Invoice Parse Agent Dashboard</title>
+    <title>Invoice Parse Agent &middot; Operator Terminal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700;9..144,900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
       :root {
         color-scheme: light;
-        --ink: #151a1f;
-        --muted: #52606b;
-        --line: #d8dee4;
-        --bg: #f6f8fa;
-        --panel: #ffffff;
-        --accent: #16745f;
-        --accent-2: #a45212;
-        --danger: #a42a2a;
+        --ink: #0e1b2c;
+        --ink-soft: #2a3a4f;
+        --muted: #6a7689;
+        --hairline: #d6cfbf;
+        --paper: #f4f1ea;
+        --paper-2: #ece7d8;
+        --panel: #fbf8f1;
+        --stamp: #b85c25;
+        --stamp-deep: #8a3f17;
+        --verified: #2f5d3a;
+        --danger: #9a2a2a;
       }
       * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
       body {
-        margin: 0;
-        background: var(--bg);
+        background: var(--paper);
         color: var(--ink);
-        font: 14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 13.5px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
       }
-      header {
-        border-bottom: 1px solid var(--line);
-        background: var(--panel);
+      h1, h2, h3, h4, p { margin: 0; }
+      .display {
+        font-family: Fraunces, "Newsreader", "EB Garamond", Georgia, serif;
+        font-optical-sizing: auto;
+      }
+      .mono {
+        font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      }
+      .micro {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 10.5px;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--muted);
       }
       .shell {
-        width: min(1180px, calc(100vw - 32px));
+        width: min(1280px, calc(100vw - 32px));
         margin: 0 auto;
       }
-      .top {
+
+      /* Masthead */
+      header.masthead {
+        background: var(--paper);
+        border-bottom: 2px solid var(--ink);
+        position: relative;
+      }
+      header.masthead::after {
+        content: "";
+        display: block;
+        height: 3px;
+        background: var(--ink);
+        margin-top: 2px;
+      }
+      .masthead-top {
+        padding: 14px 0 12px;
+        border-bottom: 1px solid var(--hairline);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 24px;
-        min-height: 76px;
+        gap: 16px;
+        flex-wrap: wrap;
       }
-      h1, h2, h3, p { margin: 0; }
-      h1 { font-size: 24px; font-weight: 760; letter-spacing: 0; }
-      h2 { font-size: 15px; font-weight: 720; letter-spacing: 0; }
-      h3 { font-size: 13px; font-weight: 720; color: var(--muted); letter-spacing: 0; text-transform: uppercase; }
-      .sub { color: var(--muted); margin-top: 4px; max-width: 760px; }
-      .status {
+      .masthead-top .lhs {
         display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .masthead-bottom {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+        gap: 32px;
+        align-items: end;
+        padding: 22px 0 22px;
+      }
+      .masthead-bottom h1 {
+        font-family: Fraunces, Georgia, serif;
+        font-weight: 900;
+        font-size: clamp(30px, 4vw, 44px);
+        line-height: 0.98;
+        letter-spacing: -0.022em;
+      }
+      .masthead-bottom h1 em {
+        font-style: italic;
+        font-weight: 500;
+        color: var(--stamp-deep);
+      }
+      .masthead-bottom .lede {
+        font-family: Fraunces, Georgia, serif;
+        font-size: 15px;
+        line-height: 1.5;
+        color: var(--ink-soft);
+        max-width: 56ch;
+        margin-top: 10px;
+      }
+      .status-block {
+        display: grid;
+        gap: 8px;
+        padding: 14px 16px;
+        border: 1px solid var(--hairline);
+        border-radius: 2px;
+        background: var(--panel);
+      }
+      .status-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11.5px;
+      }
+      .status-row .key {
+        color: var(--muted);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 10px;
+        font-weight: 600;
+      }
+      .status-row .val { color: var(--ink); font-weight: 700; }
+      .status-dot {
+        display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 8px 10px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: #fafdff;
-        white-space: nowrap;
-        color: var(--muted);
       }
       .dot {
-        width: 8px;
-        height: 8px;
+        width: 7px;
+        height: 7px;
         border-radius: 99px;
-        background: var(--accent);
+        background: var(--verified);
+        box-shadow: 0 0 0 3px rgba(47, 93, 58, 0.18);
       }
-      main {
-        display: grid;
-        grid-template-columns: 360px 1fr;
-        gap: 16px;
-        padding: 16px 0 28px;
-      }
-      section {
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 14px;
-      }
-      .stack { display: grid; gap: 12px; }
-      .controls { display: grid; gap: 10px; }
-      label { display: grid; gap: 6px; color: var(--muted); font-weight: 620; }
-      textarea {
-        width: 100%;
-        min-height: 220px;
-        resize: vertical;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 10px;
-        color: var(--ink);
-        font: 12px/1.45 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
-      }
-      input[type="file"] {
-        border: 1px dashed var(--line);
-        border-radius: 8px;
-        padding: 10px;
-        background: #fbfcfd;
-      }
-      button {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: #fff;
-        color: var(--ink);
-        min-height: 38px;
-        padding: 0 12px;
+      .seal {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 4px 9px;
+        border: 1.5px solid var(--stamp);
+        color: var(--stamp);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
         font-weight: 700;
-        cursor: pointer;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        border-radius: 2px;
+        transform: rotate(-1.5deg);
       }
-      button.primary {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: #fff;
+      .seal::before {
+        content: "";
+        width: 5px;
+        height: 5px;
+        border-radius: 99px;
+        background: var(--stamp);
       }
-      button.warning {
-        border-color: #e5bf94;
-        color: var(--accent-2);
-      }
-      .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
-      .metrics {
+
+      /* Main */
+      main {
+        padding: 22px 0 60px;
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 10px;
+        grid-template-columns: 380px 1fr;
+        gap: 22px;
       }
-      .metric {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 12px;
-        background: #fbfcfd;
+      .col { display: grid; gap: 22px; align-content: start; }
+
+      section.card {
+        background: var(--panel);
+        border: 1px solid var(--hairline);
+        border-radius: 2px;
+        box-shadow: 0 1px 0 rgba(14, 27, 44, 0.04);
+        overflow: hidden;
       }
-      .metric strong {
-        display: block;
-        margin-top: 6px;
-        font-size: 24px;
+      .card-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--hairline);
+        background: var(--paper-2);
       }
-      .grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+      .card-head .title {
+        display: flex;
+        align-items: baseline;
         gap: 12px;
       }
-      table {
+      .card-head h2 {
+        font-family: Fraunces, Georgia, serif;
+        font-weight: 700;
+        font-size: 17px;
+        letter-spacing: -0.01em;
+        color: var(--ink);
+      }
+      .card-head .ref {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .card-body { padding: 16px; display: grid; gap: 14px; }
+
+      .field-label {
+        display: grid;
+        gap: 6px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      textarea, input[type="file"] {
+        width: 100%;
+        border: 1px solid var(--hairline);
+        border-radius: 2px;
+        padding: 10px 12px;
+        color: var(--ink);
+        background: var(--paper);
+        font: 12.5px/1.55 "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+        transition: border-color 120ms ease, background 120ms ease;
+      }
+      textarea {
+        min-height: 200px;
+        resize: vertical;
+      }
+      textarea:focus, input[type="file"]:focus {
+        outline: none;
+        border-color: var(--stamp);
+        background: #fff;
+        box-shadow: 0 0 0 2px rgba(184, 92, 37, 0.12);
+      }
+      input[type="file"] {
+        border: 1.5px dashed var(--hairline);
+        background: var(--paper);
+        cursor: pointer;
+      }
+      input[type="file"]::file-selector-button {
+        margin-right: 12px;
+        padding: 6px 12px;
+        border: 1px solid var(--ink);
+        background: var(--ink);
+        color: var(--paper);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        border-radius: 2px;
+        cursor: pointer;
+      }
+      input[type="file"]::file-selector-button:hover {
+        background: var(--stamp-deep);
+        border-color: var(--stamp-deep);
+      }
+
+      button {
+        border: 1px solid var(--ink);
+        background: transparent;
+        color: var(--ink);
+        padding: 9px 14px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        border-radius: 2px;
+        cursor: pointer;
+        transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+      }
+      button:hover {
+        background: var(--ink);
+        color: var(--paper);
+      }
+      button.primary {
+        background: var(--stamp);
+        border-color: var(--stamp);
+        color: #fff;
+      }
+      button.primary:hover {
+        background: var(--stamp-deep);
+        border-color: var(--stamp-deep);
+      }
+      button.ghost {
+        border-color: var(--hairline);
+        color: var(--ink-soft);
+        background: var(--paper);
+      }
+      button.ghost:hover {
+        background: var(--paper-2);
+        color: var(--ink);
+        border-color: var(--ink);
+      }
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      /* Manifest metrics */
+      .manifest {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .manifest .cell {
+        padding: 16px 16px 18px;
+        border-right: 1px solid var(--hairline);
+        background: var(--panel);
+      }
+      .manifest .cell:last-child { border-right: none; }
+      .manifest .cell .micro { display: block; margin-bottom: 8px; }
+      .manifest .cell .value {
+        font-family: Fraunces, Georgia, serif;
+        font-weight: 700;
+        font-size: 32px;
+        line-height: 1;
+        letter-spacing: -0.025em;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+      .manifest .cell .value.accent { color: var(--stamp-deep); }
+      .manifest .cell .value .unit {
+        font-size: 18px;
+        color: var(--muted);
+        margin-left: 2px;
+      }
+
+      /* Ledger table */
+      table.ledger {
         width: 100%;
         border-collapse: collapse;
-        font-size: 13px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
       }
-      th, td {
-        padding: 8px;
-        border-bottom: 1px solid var(--line);
+      table.ledger thead th {
         text-align: left;
+        padding: 9px 14px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--muted);
+        border-bottom: 1.5px solid var(--ink);
+        background: var(--paper-2);
+      }
+      table.ledger tbody td {
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--hairline);
+        color: var(--ink);
+        vertical-align: middle;
+      }
+      table.ledger tbody tr:last-child td { border-bottom: none; }
+      table.ledger tbody tr:hover td { background: rgba(184, 92, 37, 0.04); }
+      .hit-pill {
+        display: inline-block;
+        padding: 2px 8px;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        background: var(--verified);
+        color: var(--paper);
+        border-radius: 2px;
+      }
+      .miss-none {
+        font-family: Fraunces, Georgia, serif;
+        font-style: italic;
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+
+      /* Jobs table */
+      table.jobs {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11.5px;
+      }
+      table.jobs thead th {
+        text-align: left;
+        padding: 8px 12px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        border-bottom: 1.5px solid var(--ink);
+        background: var(--paper-2);
+      }
+      table.jobs tbody td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--hairline);
         vertical-align: top;
       }
-      th { color: var(--muted); font-size: 12px; }
-      pre {
-        min-height: 420px;
+      table.jobs tbody tr:last-child td { border-bottom: none; }
+      table.jobs td button {
+        padding: 4px 8px;
+        font-size: 10.5px;
+        letter-spacing: 0.08em;
+        border-color: var(--hairline);
+        color: var(--stamp-deep);
+        background: var(--paper);
+        margin-bottom: 4px;
+      }
+      table.jobs td button:hover {
+        background: var(--stamp-deep);
+        color: var(--paper);
+        border-color: var(--stamp-deep);
+      }
+      .vendor-line {
+        display: block;
+        color: var(--muted);
+        font-size: 10.5px;
+        margin-top: 2px;
+        text-transform: none;
+        letter-spacing: 0;
+      }
+      .job-status {
+        display: inline-block;
+        padding: 2px 7px;
+        font-size: 9.5px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        border-radius: 2px;
+        background: var(--ink);
+        color: var(--paper);
+      }
+
+      /* Fit table */
+      table.fit {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.5px;
+      }
+      table.fit th {
+        text-align: left;
+        padding: 11px 14px 11px 0;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--stamp-deep);
+        border-bottom: 1px solid var(--hairline);
+        white-space: nowrap;
+        vertical-align: top;
+        width: 1%;
+      }
+      table.fit td {
+        padding: 11px 0;
+        border-bottom: 1px solid var(--hairline);
+        color: var(--ink-soft);
+        font-family: Fraunces, Georgia, serif;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      table.fit tr:last-child th, table.fit tr:last-child td { border-bottom: none; }
+
+      /* JSON terminal */
+      pre.terminal {
         margin: 0;
         overflow: auto;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 12px;
-        background: #0f1720;
-        color: #e6edf3;
-        font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+        background: var(--ink);
+        color: #e8e3d4;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        line-height: 1.6;
+        padding: 16px 18px;
+        border-radius: 2px;
+        min-height: 360px;
+        max-height: 520px;
+        white-space: pre;
       }
-      #reviewJson {
-        min-height: 300px;
+      #reviewJson { min-height: 280px; }
+
+      .placeholder {
+        padding: 16px;
+        font-family: Fraunces, Georgia, serif;
+        font-style: italic;
+        font-size: 13px;
+        color: var(--muted);
+        text-align: center;
       }
-      .error { color: var(--danger); font-weight: 700; }
+      .error {
+        color: var(--danger);
+        font-weight: 700;
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .legend {
+        font-family: Fraunces, Georgia, serif;
+        font-style: italic;
+        font-size: 12.5px;
+        color: var(--muted);
+        padding: 0 16px 14px;
+      }
+
+      /* Footer */
+      footer {
+        border-top: 2px solid var(--ink);
+        padding: 18px 0 22px;
+        background: var(--paper);
+        margin-top: 8px;
+      }
+      footer .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      footer .row b { color: var(--ink); font-weight: 700; }
+
       @media (max-width: 900px) {
-        main, .grid { grid-template-columns: 1fr; }
-        .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .top { align-items: flex-start; flex-direction: column; padding: 14px 0; }
+        main { grid-template-columns: 1fr; }
+        .manifest { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .manifest .cell:nth-child(2) { border-right: none; }
+        .masthead-bottom { grid-template-columns: 1fr; gap: 18px; }
+        .masthead-top { gap: 10px; }
       }
     </style>
   </head>
   <body>
-    <header>
-      <div class="shell top">
-        <div>
-          <h1>Invoice Parse Agent</h1>
-          <p class="sub">OCR and structured extraction dashboard for semi-structured B2B invoices, with evaluation proof and confidence gating.</p>
+    <header class="masthead">
+      <div class="shell">
+        <div class="masthead-top">
+          <div class="lhs">
+            <span class="micro">Terminal &middot; OPS-01</span>
+            <span class="micro">Channel &middot; /dashboard</span>
+            <span class="micro">Build &middot; Live</span>
+          </div>
+          <span class="seal">Customs &middot; Verified</span>
         </div>
-        <div class="status"><span class="dot"></span><span id="health">Service ready</span></div>
+        <div class="masthead-bottom">
+          <div>
+            <h1>Invoice Parse Agent <em>&mdash; operator terminal.</em></h1>
+            <p class="lede">OCR, schema-driven extraction, and confidence-gated review for semi-structured B2B logistics invoices. Parse, evaluate, and reconcile in one surface.</p>
+          </div>
+          <div class="status-block">
+            <div class="status-row">
+              <span class="key">Service</span>
+              <span class="status-dot"><span class="dot"></span><span class="val" id="health">Service ready</span></span>
+            </div>
+            <div class="status-row">
+              <span class="key">Model</span>
+              <span class="val">Claude Haiku 4.5</span>
+            </div>
+            <div class="status-row">
+              <span class="key">Memory</span>
+              <span class="val">Qdrant &middot; optional</span>
+            </div>
+            <div class="status-row">
+              <span class="key">Audit</span>
+              <span class="val">SQLite ledger</span>
+            </div>
+          </div>
+        </div>
       </div>
     </header>
+
     <div class="shell">
       <main>
-        <div class="stack">
-          <section class="stack">
-            <div>
-              <h2>Parse Invoice</h2>
-              <p class="sub">Upload a PDF or parse the sample invoice text.</p>
+        <div class="col">
+          <section class="card">
+            <div class="card-head">
+              <div class="title">
+                <h2>Intake bench</h2>
+                <span class="ref">Sheet A / Parse</span>
+              </div>
+              <span class="micro">Upload &middot; Sample &middot; Text</span>
             </div>
-            <div class="controls">
-              <label>
-                PDF or image upload
+            <div class="card-body">
+              <label class="field-label">
+                <span>PDF or image upload</span>
                 <input id="file" type="file" accept=".pdf,image/*,text/plain" />
               </label>
               <div class="button-row">
                 <button class="primary" id="parseFile">Parse upload</button>
-                <button id="loadSample">Load sample</button>
-                <button class="warning" id="runEval">Run eval</button>
+                <button class="ghost" id="loadSample">Load sample</button>
+                <button id="runEval">Run eval</button>
               </div>
-              <label>
-                Invoice text
+              <label class="field-label">
+                <span>Invoice text &middot; pasted source</span>
                 <textarea id="invoiceText"></textarea>
               </label>
               <button class="primary" id="parseText">Parse text</button>
             </div>
           </section>
-          <section class="stack">
-            <div>
-              <h2>Review Queue</h2>
-              <p class="sub">Low-confidence parses become review jobs. Saving a correction teaches Qdrant.</p>
+
+          <section class="card">
+            <div class="card-head">
+              <div class="title">
+                <h2>Review queue</h2>
+                <span class="ref">Sheet B / Reconcile</span>
+              </div>
+              <span class="micro">Low-confidence &middot; Editable</span>
             </div>
-            <div class="button-row">
-              <button id="refreshJobs">Refresh jobs</button>
-              <button class="primary" id="saveReview">Save reviewed JSON</button>
+            <div class="card-body">
+              <div class="button-row">
+                <button class="ghost" id="refreshJobs">Refresh jobs</button>
+                <button class="primary" id="saveReview">Save reviewed JSON</button>
+              </div>
+              <table class="jobs">
+                <thead><tr><th>Status</th><th>Invoice</th><th>Total</th></tr></thead>
+                <tbody id="jobRows"><tr><td colspan="3" class="placeholder">No jobs loaded.</td></tr></tbody>
+              </table>
+              <label class="field-label">
+                <span>Editable invoice JSON</span>
+                <textarea id="reviewJson"></textarea>
+              </label>
             </div>
-            <table>
-              <thead><tr><th>Status</th><th>Invoice</th><th>Total</th></tr></thead>
-              <tbody id="jobRows"><tr><td colspan="3">No jobs loaded.</td></tr></tbody>
-            </table>
-            <label>
-              Editable invoice JSON
-              <textarea id="reviewJson"></textarea>
-            </label>
           </section>
         </div>
-        <div class="stack">
-          <section class="stack">
-            <div>
-              <h2>Evaluation</h2>
-              <p class="sub">Ground truth corpus: 5 logistics invoices, field-level scoring.</p>
+
+        <div class="col">
+          <section class="card">
+            <div class="card-head">
+              <div class="title">
+                <h2>Evaluation manifest</h2>
+                <span class="ref">Sheet C / Eval</span>
+              </div>
+              <span class="micro">Field-level scoring</span>
             </div>
-            <div class="metrics">
-              <div class="metric"><h3>Field Hit Rate</h3><strong id="hitRate">--</strong></div>
-              <div class="metric"><h3>Fields</h3><strong id="fields">--</strong></div>
-              <div class="metric"><h3>Hits</h3><strong id="hits">--</strong></div>
-              <div class="metric"><h3>Avg Confidence</h3><strong id="confidence">--</strong></div>
+            <div class="manifest">
+              <div class="cell">
+                <span class="micro">Field hit rate</span>
+                <div class="value accent"><span id="hitRate">--</span></div>
+              </div>
+              <div class="cell">
+                <span class="micro">Fields</span>
+                <div class="value"><span id="fields">--</span></div>
+              </div>
+              <div class="cell">
+                <span class="micro">Hits</span>
+                <div class="value"><span id="hits">--</span></div>
+              </div>
+              <div class="cell">
+                <span class="micro">Avg confidence</span>
+                <div class="value"><span id="confidence">--</span></div>
+              </div>
             </div>
-            <table>
-              <thead><tr><th>Case</th><th>Hit Rate</th><th>Misses</th></tr></thead>
-              <tbody id="caseRows"><tr><td colspan="3">Run eval to populate results.</td></tr></tbody>
+            <table class="ledger">
+              <thead><tr><th>Case</th><th>Hit rate</th><th>Misses</th></tr></thead>
+              <tbody id="caseRows"><tr><td colspan="3" class="placeholder">Run eval to populate results.</td></tr></tbody>
             </table>
+            <p class="legend">Ground-truth corpus &mdash; 5 logistics invoices, scored by recovered field count against expected schema.</p>
           </section>
-          <div class="grid">
-            <section class="stack">
-              <h2>Structured JSON</h2>
-              <pre id="jsonOut">{}</pre>
-            </section>
-            <section class="stack">
-              <h2>Operational Fit</h2>
-              <table>
+
+          <section class="card">
+            <div class="card-head">
+              <div class="title">
+                <h2>Structured JSON</h2>
+                <span class="ref">Sheet D / Output</span>
+              </div>
+              <span class="micro">Live response</span>
+            </div>
+            <div class="card-body" style="padding: 0;">
+<pre class="terminal" id="jsonOut">{}</pre>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-head">
+              <div class="title">
+                <h2>Operational fit</h2>
+                <span class="ref">Sheet E / Notes</span>
+              </div>
+              <span class="micro">Boundaries declared</span>
+            </div>
+            <div class="card-body">
+              <table class="fit">
                 <tbody>
                   <tr><th>Self-host OCR</th><td>Tesseract.js path for Docker deployments.</td></tr>
-                  <tr><th>Managed OCR</th><td>Vision/Document AI adapter boundary is explicit.</td></tr>
+                  <tr><th>Managed OCR</th><td>Vision &middot; Document AI adapter boundary is explicit.</td></tr>
                   <tr><th>Memory</th><td>Optional Qdrant retrieval of similar prior invoices.</td></tr>
                   <tr><th>Extraction</th><td>Claude Haiku 4.5 schema-driven JSON with validation.</td></tr>
                   <tr><th>Automation</th><td>n8n webhook template with confidence gate.</td></tr>
                 </tbody>
               </table>
-            </section>
-          </div>
+            </div>
+          </section>
         </div>
       </main>
     </div>
+
+    <footer>
+      <div class="shell row">
+        <span>Invoice Parse Agent &middot; <b>Operator Terminal</b></span>
+        <span>Bun &middot; Hono &middot; Tesseract &middot; Qdrant</span>
+        <span>Doc <b>OPS-01</b></span>
+      </div>
+    </footer>
     <script>
       const sample = ${JSON.stringify(sampleInvoiceText)};
       const out = document.getElementById("jsonOut");
@@ -339,12 +793,12 @@ const html = String.raw`<!doctype html>
         const body = await response.json();
         if (!response.ok) throw new Error(body.error || "Could not load jobs");
         if (!body.jobs.length) {
-          jobRows.innerHTML = '<tr><td colspan="3">No jobs yet.</td></tr>';
+          jobRows.innerHTML = '<tr><td colspan="3" class="placeholder">No jobs yet.</td></tr>';
           return;
         }
         jobRows.innerHTML = body.jobs.map((job) => {
           const total = job.totalAmount + " " + job.totalCurrency;
-          return '<tr data-id="' + escapeHtml(job.id) + '"><td>' + escapeHtml(job.status) + '</td><td><button data-job="' + escapeHtml(job.id) + '">' + escapeHtml(job.invoiceNumber) + '</button><br>' + escapeHtml(job.vendor) + '</td><td>' + escapeHtml(total) + '</td></tr>';
+          return '<tr data-id="' + escapeHtml(job.id) + '"><td><span class="job-status">' + escapeHtml(job.status) + '</span></td><td><button data-job="' + escapeHtml(job.id) + '">' + escapeHtml(job.invoiceNumber) + '</button><span class="vendor-line">' + escapeHtml(job.vendor) + '</span></td><td>' + escapeHtml(total) + '</td></tr>';
         }).join("");
         jobRows.querySelectorAll("button[data-job]").forEach((button) => {
           button.addEventListener("click", () => selectJob(button.getAttribute("data-job")).catch(setError));
@@ -387,8 +841,9 @@ const html = String.raw`<!doctype html>
         document.getElementById("hits").textContent = totals.hits;
         document.getElementById("confidence").textContent = Math.round(totals.averageConfidence * 100) + "%";
         caseRows.innerHTML = body.cases.map((item) => {
-          const misses = item.misses.length ? item.misses.join(", ") : "none";
-          return "<tr><td>" + item.id + "</td><td>" + Math.round(item.hitRate * 100) + "%</td><td>" + misses + "</td></tr>";
+          const missesText = item.misses.length ? escapeHtml(item.misses.join(", ")) : '<span class="miss-none">none</span>';
+          const rate = Math.round(item.hitRate * 100);
+          return '<tr><td class="case-id">' + escapeHtml(item.id) + '</td><td><span class="hit-pill">' + rate + '%</span></td><td>' + missesText + '</td></tr>';
         }).join("");
         health.textContent = "Eval complete";
         setJson(body);
