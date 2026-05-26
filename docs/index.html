@@ -4,191 +4,697 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Invoice Parse Agent Proof</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700;9..144,900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
       :root {
-        --ink: #151a1f;
-        --muted: #52606b;
-        --line: #d8dee4;
-        --bg: #f6f8fa;
-        --panel: #ffffff;
-        --accent: #16745f;
-        --accent-2: #a45212;
+        --ink: #0e1b2c;
+        --ink-soft: #2a3a4f;
+        --muted: #6a7689;
+        --rule: #1a2a3f;
+        --hairline: #d6cfbf;
+        --paper: #f4f1ea;
+        --paper-2: #ece7d8;
+        --panel: #fbf8f1;
+        --stamp: #b85c25;
+        --stamp-deep: #8a3f17;
+        --verified: #2f5d3a;
+        --shadow: 0 1px 0 rgba(14, 27, 44, 0.04);
       }
       * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
       body {
-        margin: 0;
-        background: var(--bg);
+        background: var(--paper);
         color: var(--ink);
-        font: 14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 14px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        background-image:
+          repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 31px,
+            rgba(14, 27, 44, 0.025) 31px,
+            rgba(14, 27, 44, 0.025) 32px
+          );
       }
-      header {
-        background: var(--panel);
-        border-bottom: 1px solid var(--line);
+      h1, h2, h3, h4, p { margin: 0; }
+      .display {
+        font-family: Fraunces, "Newsreader", "EB Garamond", Georgia, serif;
+        font-optical-sizing: auto;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .mono {
+        font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      }
+      .micro {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
       }
       .shell {
-        width: min(1080px, calc(100vw - 32px));
+        width: min(1180px, calc(100vw - 40px));
         margin: 0 auto;
       }
-      .hero {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 24px;
+
+      /* Masthead */
+      header.masthead {
+        background: var(--paper);
+        border-bottom: 2px solid var(--ink);
+        position: relative;
+      }
+      header.masthead::after {
+        content: "";
+        display: block;
+        height: 4px;
+        background: var(--ink);
+        margin-top: 2px;
+      }
+      .masthead-inner {
+        padding: 28px 0 22px;
+      }
+      .meta-strip {
+        display: flex;
         align-items: center;
-        padding: 26px 0;
-      }
-      h1, h2, h3, p { margin: 0; }
-      h1 { font-size: 30px; letter-spacing: 0; }
-      h2 { font-size: 17px; letter-spacing: 0; }
-      h3 { font-size: 13px; letter-spacing: 0; color: var(--muted); text-transform: uppercase; }
-      .sub { color: var(--muted); max-width: 760px; margin-top: 6px; }
-      a { color: var(--accent); font-weight: 700; text-decoration: none; }
-      .badge {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 10px 12px;
-        background: #fafdff;
-        white-space: nowrap;
-      }
-      main {
-        display: grid;
+        justify-content: space-between;
         gap: 16px;
-        padding: 16px 0 32px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid var(--hairline);
       }
-      section {
+      .meta-strip .lhs {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .meta-strip .seal {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 10px;
+        border: 1.5px solid var(--stamp);
+        color: var(--stamp);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        border-radius: 2px;
+        transform: rotate(-1.5deg);
+      }
+      .meta-strip .seal::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 99px;
+        background: var(--stamp);
+      }
+      .hero {
+        margin-top: 22px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+        gap: 40px;
+        align-items: end;
+      }
+      .hero h1 {
+        font-family: Fraunces, "Newsreader", Georgia, serif;
+        font-weight: 900;
+        font-size: clamp(38px, 5.4vw, 64px);
+        line-height: 0.98;
+        letter-spacing: -0.025em;
+        color: var(--ink);
+      }
+      .hero h1 em {
+        font-style: italic;
+        font-weight: 500;
+        color: var(--stamp-deep);
+      }
+      .hero .lede {
+        font-family: Fraunces, "Newsreader", Georgia, serif;
+        font-weight: 400;
+        font-size: 17px;
+        line-height: 1.5;
+        color: var(--ink-soft);
+        max-width: 38ch;
+      }
+      .hero .lede strong { font-weight: 600; color: var(--ink); }
+      .hero-right {
+        display: grid;
+        gap: 10px;
+        padding-bottom: 4px;
+      }
+      .live-link {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 14px 16px;
+        background: var(--ink);
+        color: var(--paper);
+        text-decoration: none;
+        border-radius: 2px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.05em;
+      }
+      .live-link span:first-child {
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--paper-2);
+        opacity: 0.7;
+      }
+      .live-link strong {
+        font-weight: 700;
+        color: #fff;
+      }
+      .live-link:hover { background: var(--stamp-deep); }
+      .hero-right .stat-line {
+        display: flex;
+        justify-content: space-between;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        padding: 4px 0;
+        border-bottom: 1px dotted var(--hairline);
+      }
+      .hero-right .stat-line:last-child { border-bottom: none; }
+      .hero-right .stat-line b {
+        color: var(--ink);
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      /* Main */
+      main {
+        padding: 28px 0 60px;
+        display: grid;
+        gap: 28px;
+      }
+      .section {
         background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 16px;
+        border: 1px solid var(--hairline);
+        border-radius: 2px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
       }
-      .metrics {
+      .section-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--hairline);
+        background: var(--paper-2);
+      }
+      .section-head .title {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+      }
+      .section-head h2 {
+        font-family: Fraunces, "Newsreader", Georgia, serif;
+        font-weight: 700;
+        font-size: 20px;
+        letter-spacing: -0.01em;
+        color: var(--ink);
+      }
+      .section-head .ref {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .section-body { padding: 22px; }
+
+      /* Manifest metrics */
+      .manifest {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 10px;
+        border-top: 1px solid var(--hairline);
       }
-      .metric {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 14px;
-        background: #fbfcfd;
+      .manifest .cell {
+        padding: 22px 22px 24px;
+        border-right: 1px solid var(--hairline);
+        border-bottom: 1px solid var(--hairline);
+        background: var(--panel);
+        position: relative;
       }
-      .metric strong {
-        display: block;
+      .manifest .cell:last-child { border-right: none; }
+      .manifest .cell .micro { display: block; margin-bottom: 10px; }
+      .manifest .cell .value {
+        font-family: Fraunces, "Newsreader", Georgia, serif;
+        font-weight: 700;
+        font-size: 44px;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+      .manifest .cell .value.accent { color: var(--stamp-deep); }
+      .manifest .cell .delta {
         margin-top: 8px;
-        font-size: 28px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        color: var(--verified);
       }
-      .grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
-      }
-      th, td {
-        padding: 8px;
-        border-bottom: 1px solid var(--line);
-        text-align: left;
-        vertical-align: top;
-      }
-      th { color: var(--muted); }
-      pre {
-        margin: 0;
-        overflow: auto;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 12px;
-        background: #0f1720;
-        color: #e6edf3;
-        font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
-      }
+      .manifest .cell .delta.neutral { color: var(--muted); }
+
+      /* Flow strip */
       .flow {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 8px;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
       }
       .step {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 12px;
-        min-height: 86px;
-        background: #fbfcfd;
+        padding: 18px 18px 20px;
+        border-right: 1px solid var(--hairline);
+        background: var(--panel);
+        position: relative;
       }
-      .step strong { display: block; margin-bottom: 6px; }
+      .step:last-child { border-right: none; }
+      .step .stage {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        color: var(--stamp);
+        margin-bottom: 8px;
+      }
+      .step h4 {
+        font-family: Fraunces, "Newsreader", Georgia, serif;
+        font-weight: 700;
+        font-size: 18px;
+        letter-spacing: -0.01em;
+        color: var(--ink);
+        margin-bottom: 6px;
+      }
+      .step p {
+        font-size: 12.5px;
+        line-height: 1.45;
+        color: var(--ink-soft);
+      }
+
+      .workflow-meta {
+        padding: 18px 22px;
+        display: grid;
+        gap: 6px;
+        background: var(--paper-2);
+        border-bottom: 1px solid var(--hairline);
+      }
+      .workflow-meta a {
+        color: var(--stamp-deep);
+        font-weight: 600;
+        text-decoration: none;
+        border-bottom: 1px solid currentColor;
+      }
+      .workflow-meta a:hover { color: var(--ink); }
+      .workflow-meta code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        padding: 1px 5px;
+        background: var(--paper);
+        border: 1px solid var(--hairline);
+        border-radius: 2px;
+      }
+      .workflow-meta .line {
+        display: flex;
+        gap: 12px;
+        align-items: baseline;
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+      .workflow-meta .line .micro { min-width: 130px; }
+
+      /* Screenshot */
+      .screenshot-frame {
+        padding: 20px;
+        background: var(--paper-2);
+        border-top: 1px solid var(--hairline);
+      }
+      .screenshot-frame img {
+        display: block;
+        width: 100%;
+        border: 1px solid var(--rule);
+        border-radius: 2px;
+        box-shadow: 0 8px 24px -12px rgba(14, 27, 44, 0.25);
+      }
+      .screenshot-caption {
+        margin-top: 12px;
+        font-family: Fraunces, Georgia, serif;
+        font-style: italic;
+        font-size: 13px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      /* Split grid */
+      .split {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        gap: 28px;
+      }
+
+      /* Eval table */
+      table.ledger {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+      }
+      table.ledger thead th {
+        text-align: left;
+        padding: 10px 14px;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--muted);
+        border-bottom: 1.5px solid var(--ink);
+        background: var(--paper-2);
+      }
+      table.ledger tbody td {
+        padding: 14px 14px;
+        border-bottom: 1px solid var(--hairline);
+        color: var(--ink);
+        vertical-align: middle;
+      }
+      table.ledger tbody tr:last-child td { border-bottom: none; }
+      table.ledger tbody tr:hover td { background: rgba(184, 92, 37, 0.04); }
+      .case-id {
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .hit-pill {
+        display: inline-block;
+        padding: 3px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        background: var(--verified);
+        color: #f4f1ea;
+        border-radius: 2px;
+      }
+      .miss-none {
+        font-style: italic;
+        color: var(--muted);
+        font-family: Fraunces, Georgia, serif;
+        font-size: 13px;
+      }
+
+      /* Code blocks */
+      pre.terminal {
+        margin: 0;
+        overflow-x: auto;
+        background: var(--ink);
+        color: #e8e3d4;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12.5px;
+        line-height: 1.65;
+        padding: 18px 22px;
+        border-radius: 2px;
+      }
+      pre.terminal .cmd { color: var(--stamp); }
+      pre.terminal .flag { color: #a8c5d8; }
+      pre.terminal .val { color: #d8d2c0; }
+      pre.terminal .comment { color: #6a7689; font-style: italic; }
+
+      pre.json {
+        margin: 0;
+        overflow-x: auto;
+        background: var(--ink);
+        color: #e8e3d4;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12.5px;
+        line-height: 1.65;
+        padding: 18px 22px;
+        border-radius: 2px;
+      }
+
+      .smoke-note {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-left: 3px solid var(--stamp);
+        background: var(--paper-2);
+        font-size: 12.5px;
+        color: var(--ink-soft);
+        font-family: Fraunces, Georgia, serif;
+        font-style: italic;
+      }
+      .smoke-note code {
+        font-family: "JetBrains Mono", monospace;
+        font-style: normal;
+        font-size: 12px;
+        color: var(--ink);
+      }
+
+      /* Footer */
+      footer {
+        border-top: 2px solid var(--ink);
+        padding: 22px 0 28px;
+        margin-top: 8px;
+        background: var(--paper);
+      }
+      footer .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      footer .row b { color: var(--ink); font-weight: 700; }
+
       @media (max-width: 860px) {
-        .hero, .grid { grid-template-columns: 1fr; }
-        .metrics, .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .hero { grid-template-columns: 1fr; gap: 24px; }
+        .hero-right { padding-bottom: 0; }
+        .manifest { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .manifest .cell:nth-child(2) { border-right: none; }
+        .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .step:nth-child(2n) { border-right: none; }
+        .step { border-bottom: 1px solid var(--hairline); }
+        .step:nth-last-child(-n+2) { border-bottom: none; }
+        .split { grid-template-columns: 1fr; gap: 20px; }
+        .meta-strip { flex-direction: column; align-items: flex-start; gap: 12px; }
+        .section-body { padding: 18px; }
       }
     </style>
   </head>
   <body>
-    <header>
-      <div class="shell hero">
-        <div>
-          <h1>Invoice Parse Agent Proof Dashboard</h1>
-          <p class="sub">Public proof for OCR, document parsing, structured extraction, eval scoring, Docker deployability, and n8n process automation.</p>
+    <header class="masthead">
+      <div class="shell masthead-inner">
+        <div class="meta-strip">
+          <div class="lhs">
+            <span class="micro">Doc &middot; INV-PROOF-01</span>
+            <span class="micro">Issued &middot; 2026</span>
+            <span class="micro">Edition &middot; Public</span>
+          </div>
+          <span class="seal">Customs &middot; Verified</span>
         </div>
-        <div class="badge"><a href="https://missioncontrol.mjdeving.com/invoice-parse/dashboard">Live backend</a></div>
+        <div class="hero">
+          <div>
+            <h1>Invoice Parse Agent <em>&mdash; proof of intake.</em></h1>
+          </div>
+          <div class="hero-right">
+            <p class="lede">
+              A self-hostable terminal for OCR, structured extraction, and confidence-gated review of semi-structured B2B logistics invoices.
+            </p>
+            <a class="live-link" href="https://missioncontrol.mjdeving.com/invoice-parse/dashboard">
+              <span>Live operator dashboard</span>
+              <strong>missioncontrol &rsaquo;</strong>
+            </a>
+            <div class="stat-line"><span>Stack</span><b>Bun &middot; Hono &middot; Tesseract &middot; Qdrant</b></div>
+            <div class="stat-line"><span>Model</span><b>Claude Haiku 4.5</b></div>
+            <div class="stat-line"><span>Deploy</span><b>Docker &middot; n8n webhook</b></div>
+          </div>
+        </div>
       </div>
     </header>
-    <main class="shell">
-      <section>
-        <div class="metrics">
-          <div class="metric"><h3>Field Hit Rate</h3><strong>100%</strong></div>
-          <div class="metric"><h3>Fields Checked</h3><strong>67</strong></div>
-          <div class="metric"><h3>Fixture Invoices</h3><strong>5</strong></div>
-          <div class="metric"><h3>Tests</h3><strong>14/14</strong></div>
-        </div>
-      </section>
-      <section>
-        <h2>Workflow Surface</h2>
-        <p class="sub">The shipped app includes a live service dashboard at <code>/dashboard</code> when run from Docker or Bun.</p>
-        <p class="sub">Hosted backend: <a href="https://missioncontrol.mjdeving.com/invoice-parse/dashboard">missioncontrol.mjdeving.com/invoice-parse/dashboard</a></p>
-        <p class="sub">Rendered dashboard proof: <a href="./proof/dashboard-local.png">dashboard-local.png</a></p>
-        <div class="flow" style="margin-top: 12px;">
-          <div class="step"><strong>PDF/input</strong>URL, multipart PDF, image, raw body, or test text.</div>
-          <div class="step"><strong>OCR</strong>Embedded PDF text first, Tesseract.js scanned-image smoke tested.</div>
-          <div class="step"><strong>Fallback</strong>Google Vision / Document AI boundary documented and isolated.</div>
-          <div class="step"><strong>Memory</strong>Qdrant retrieves similar prior invoices with hash or OpenAI embeddings.</div>
-          <div class="step"><strong>Extraction</strong>Claude Haiku 4.5 schema-driven JSON, zod validated.</div>
-          <div class="step"><strong>Review</strong>SQLite job ledger and editable low-confidence review queue.</div>
-        </div>
-      </section>
-      <section>
-        <h2>Dashboard Screenshot</h2>
-        <img src="./proof/dashboard-local.png" alt="Invoice Parse Agent dashboard with eval metrics and parsing controls" style="width: 100%; border: 1px solid var(--line); border-radius: 8px; margin-top: 12px;" />
-      </section>
-      <div class="grid">
-        <section>
-          <h2>Eval Proof</h2>
-          <table>
-            <thead><tr><th>Case</th><th>Hit Rate</th><th>Misses</th></tr></thead>
-            <tbody>
-              <tr><td>mustard-logistics-001</td><td>100%</td><td>none</td></tr>
-              <tr><td>northsea-parts-1042</td><td>100%</td><td>none</td></tr>
-              <tr><td>rhein-freight-778</td><td>100%</td><td>none</td></tr>
-              <tr><td>baltic-coldchain-512</td><td>100%</td><td>none</td></tr>
-              <tr><td>alpine-spares-9201</td><td>100%</td><td>none</td></tr>
-            </tbody>
-          </table>
-        </section>
-        <section>
-          <h2>Run It</h2>
-          <pre>docker build -t invoice-parse-agent .
-docker run --rm -p 8787:8787 \
-  -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
-  -e ANTHROPIC_MODEL=claude-haiku-4-5 \
-  -e QDRANT_URL=http://host.docker.internal:6333 \
-  invoice-parse-agent
 
-open http://localhost:8787/dashboard</pre>
-          <p class="sub" style="margin-top: 10px;">Hosted API smoke: <code>https://missioncontrol.mjdeving.com/invoice-parse/eval</code></p>
+    <main class="shell">
+      <section class="section">
+        <div class="section-head">
+          <div class="title">
+            <h2>Manifest of evidence</h2>
+            <span class="ref">Sheet 01 / Eval</span>
+          </div>
+          <span class="micro">Field-level scoring</span>
+        </div>
+        <div class="manifest">
+          <div class="cell">
+            <span class="micro">Field hit rate</span>
+            <div class="value accent">100<span style="font-size: 26px; color: var(--muted);">%</span></div>
+            <div class="delta">&#8251; All required fields recovered</div>
+          </div>
+          <div class="cell">
+            <span class="micro">Fields checked</span>
+            <div class="value">67</div>
+            <div class="delta neutral">Per-invoice schema</div>
+          </div>
+          <div class="cell">
+            <span class="micro">Fixture invoices</span>
+            <div class="value">05</div>
+            <div class="delta neutral">Logistics corpus</div>
+          </div>
+          <div class="cell">
+            <span class="micro">Test suite</span>
+            <div class="value">14<span style="font-size: 26px; color: var(--muted);">/14</span></div>
+            <div class="delta">CI passing</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div class="title">
+            <h2>Workflow surface</h2>
+            <span class="ref">Sheet 02 / Pipeline</span>
+          </div>
+          <span class="micro">Six stages, declared boundaries</span>
+        </div>
+        <div class="workflow-meta">
+          <div class="line"><span class="micro">Live dashboard</span><a href="https://missioncontrol.mjdeving.com/invoice-parse/dashboard">missioncontrol.mjdeving.com/invoice-parse/dashboard</a></div>
+          <div class="line"><span class="micro">Local mount</span><code>/dashboard</code> &middot; served from Docker or <code>bun run dev</code></div>
+          <div class="line"><span class="micro">Rendered proof</span><a href="./proof/dashboard-local.png">dashboard-local.png</a></div>
+        </div>
+        <div class="flow">
+          <div class="step">
+            <div class="stage">01 &middot; Intake</div>
+            <h4>PDF / input</h4>
+            <p>URL, multipart PDF, image, raw body, or test text.</p>
+          </div>
+          <div class="step">
+            <div class="stage">02 &middot; OCR</div>
+            <h4>Recognition</h4>
+            <p>Embedded PDF text first; Tesseract.js smoke-tested on scans.</p>
+          </div>
+          <div class="step">
+            <div class="stage">03 &middot; Fallback</div>
+            <h4>Managed OCR</h4>
+            <p>Vision / Document AI boundary documented and isolated.</p>
+          </div>
+          <div class="step">
+            <div class="stage">04 &middot; Memory</div>
+            <h4>Qdrant recall</h4>
+            <p>Similar prior invoices via hash or OpenAI embeddings.</p>
+          </div>
+          <div class="step">
+            <div class="stage">05 &middot; Extract</div>
+            <h4>Claude Haiku</h4>
+            <p>Schema-driven JSON, zod-validated against the invoice schema.</p>
+          </div>
+          <div class="step">
+            <div class="stage">06 &middot; Review</div>
+            <h4>SQLite ledger</h4>
+            <p>Confidence-gated review queue; saved edits teach Qdrant.</p>
+          </div>
+        </div>
+        <div class="screenshot-frame">
+          <img src="./proof/dashboard-local.png" alt="Invoice Parse Agent dashboard with eval metrics and parsing controls" />
+          <p class="screenshot-caption">Plate 01 &mdash; operator dashboard, parsed sample with eval surface populated.</p>
+        </div>
+      </section>
+
+      <div class="split">
+        <section class="section">
+          <div class="section-head">
+            <div class="title">
+              <h2>Eval proof</h2>
+              <span class="ref">Sheet 03 / Cases</span>
+            </div>
+            <span class="micro">Per-fixture hit rate</span>
+          </div>
+          <div class="section-body" style="padding: 0;">
+            <table class="ledger">
+              <thead>
+                <tr>
+                  <th>Case</th>
+                  <th>Hit rate</th>
+                  <th>Misses</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="case-id">mustard-logistics-001</td>
+                  <td><span class="hit-pill">100%</span></td>
+                  <td><span class="miss-none">none</span></td>
+                </tr>
+                <tr>
+                  <td class="case-id">northsea-parts-1042</td>
+                  <td><span class="hit-pill">100%</span></td>
+                  <td><span class="miss-none">none</span></td>
+                </tr>
+                <tr>
+                  <td class="case-id">rhein-freight-778</td>
+                  <td><span class="hit-pill">100%</span></td>
+                  <td><span class="miss-none">none</span></td>
+                </tr>
+                <tr>
+                  <td class="case-id">baltic-coldchain-512</td>
+                  <td><span class="hit-pill">100%</span></td>
+                  <td><span class="miss-none">none</span></td>
+                </tr>
+                <tr>
+                  <td class="case-id">alpine-spares-9201</td>
+                  <td><span class="hit-pill">100%</span></td>
+                  <td><span class="miss-none">none</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div class="title">
+              <h2>Run it</h2>
+              <span class="ref">Sheet 04 / Deploy</span>
+            </div>
+            <span class="micro">Docker, one terminal</span>
+          </div>
+          <div class="section-body">
+<pre class="terminal"><span class="cmd">docker build</span> <span class="flag">-t</span> <span class="val">invoice-parse-agent</span> .
+<span class="cmd">docker run</span> <span class="flag">--rm</span> <span class="flag">-p</span> <span class="val">8787:8787</span> \
+  <span class="flag">-e</span> <span class="val">ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY"</span> \
+  <span class="flag">-e</span> <span class="val">ANTHROPIC_MODEL=claude-haiku-4-5</span> \
+  <span class="flag">-e</span> <span class="val">QDRANT_URL=http://host.docker.internal:6333</span> \
+  <span class="val">invoice-parse-agent</span>
+
+<span class="cmd">open</span> <span class="val">http://localhost:8787/dashboard</span></pre>
+            <div class="smoke-note">
+              Hosted API smoke test &mdash; <code>GET https://missioncontrol.mjdeving.com/invoice-parse/eval</code>
+            </div>
+          </div>
         </section>
       </div>
-      <section>
-        <h2>Verification Snapshot</h2>
-        <pre>{
+
+      <section class="section">
+        <div class="section-head">
+          <div class="title">
+            <h2>Verification snapshot</h2>
+            <span class="ref">Sheet 05 / Signed</span>
+          </div>
+          <span class="micro">CI &middot; Docker &middot; Eval</span>
+        </div>
+        <div class="section-body">
+<pre class="json">{
   "ci": "passed",
   "typecheck": "passed",
   "tests": "14 passed",
@@ -203,7 +709,16 @@ open http://localhost:8787/dashboard</pre>
     "averageConfidence": 0.72
   }
 }</pre>
+        </div>
       </section>
     </main>
+
+    <footer>
+      <div class="shell row">
+        <span>Invoice Parse Agent &middot; <b>Proof Edition</b></span>
+        <span>Bun &middot; Hono &middot; Tesseract &middot; Qdrant &middot; Claude</span>
+        <span>Doc <b>INV-PROOF-01</b></span>
+      </div>
+    </footer>
   </body>
 </html>
