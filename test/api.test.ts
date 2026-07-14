@@ -2,6 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { app } from "../src/server";
 import { resetJobsForTests } from "../src/jobs/store";
 
+// POST /parse is the operator surface, which the public demo seals. See test/demo.test.ts.
+process.env.DEMO_MODE = "false";
+
 const text = `Vendor: API Freight
 Invoice No: API-7
 Invoice Date: 2026-05-07

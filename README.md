@@ -1,207 +1,86 @@
-# Invoice Parse Agent
+# invoice-parse-agent
 
-OCR and document-processing hero repo for turning invoice PDFs into structured JSON:
+Invoices become structured JSON, and every field is checked back against the document it came from, so the ones the pipeline was not sure about are marked instead of quietly passed on.
 
-```bash
-curl -s -X POST http://localhost:8787/parse \
-  -H 'content-type: application/json' \
-  -d '{"url":"https://example.com/invoice.pdf"}'
-```
+**Live:** <https://invoice-parse-agent.up.railway.app> · **Stack:** Bun · Hono · poppler · Tesseract · zod
 
-The API extracts document text, asks Claude Haiku 4.5 for schema-constrained invoice JSON, and reports evaluation accuracy against a small ground-truth corpus.
+![invoice-parse-agent console, showing two extracted quantities marked because Tesseract read them under the confidence floor](docs/screenshot.png)
 
-Live proof dashboard: https://mj-deving.github.io/invoice-parse-agent/
+## What it does
 
-Live backend dashboard: https://missioncontrol.mjdeving.com/invoice-parse/dashboard
+A document arrives as a PDF or an image. A born-digital PDF has its text layer read directly; a scan is rasterized with `pdftoppm` and read by Tesseract. The text goes to a schema-constrained extractor, and zod rejects anything that does not fit the invoice schema, so malformed output fails at the boundary instead of entering an accounting workflow.
 
-Rendered dashboard proof: `docs/proof/dashboard-local.png`
+An extractor returns a value for every field whether or not the document supports one, and a field it guessed looks exactly like a field it read. So each field is put through three checks that a reader can re-run:
 
-## Why this exists
+- **ocr**: the lowest confidence Tesseract reported for the words carrying that value. Below 0.80, the field is marked. This runs only where OCR ran, because a born-digital PDF has no OCR doubt to report.
+- **source**: whether the value is present in the source text, matched on digit boundaries so a quantity of 9 is not "found" inside a tax ID ending in 900.
+- **arithmetic**: whether quantity × unit price equals the line total, and whether the lines plus tax equal the invoice total.
 
-Invoice processing is still full of manual handoffs: PDFs arrive by email or webhook, OCR output is noisy, vendor layouts vary, and low-confidence fields need human review before they can enter accounting or logistics workflows.
+A field failing any of them is marked. The source text is printed under the fields, so a visitor can check every mark themselves. There is deliberately no per-field score from the model: a number an extractor invents about its own output cannot be checked by anyone.
 
-This project shows a practical intake pipeline for that workflow. It turns invoice PDFs and scans into structured JSON, scores extraction quality against ground truth, keeps a review queue for uncertain results, and stores reviewed corrections as vendor memory so recurring documents become easier to process over time.
-
-The scope is intentionally narrow: semi-structured B2B invoices for logistics, orders, and supplier operations. The goal is not universal document understanding; it is a reliable automation loop for a common back-office process.
+The three checks are independent, and they catch different things. On the bundled scan, Tesseract misreads `qty=1` as `gty=1` and reports 0.56 on it; the value survives anyway, and the arithmetic still closes, so only the confidence check objects. Rasterize the same invoice more aggressively and the quantity is genuinely lost, the confidence check misses it, and the arithmetic catches it instead: `1 x 18.00 != 216.00`.
 
 ## Architecture
 
-![Invoice Parse Agent pipeline — PDF/image through OCR or text extraction, Qdrant memory retrieval, Claude Haiku extraction, Zod validation, SQLite job ledger and review queue](docs/diagrams/pipeline.png)
-
 ```text
-POST /parse
-  URL or multipart PDF/image
-  -> document text layer extraction for embedded-text PDFs
-  -> Tesseract.js OCR for image/scanned inputs
-  -> optional managed Vision/Document AI adapter boundary
-  -> optional Qdrant retrieval of similar prior invoices
-  -> Claude structured extraction
-  -> optional Qdrant storage of parsed invoice memory
-  -> SQLite job ledger and review queue for low-confidence parses
-  -> zod-validated invoice JSON
+POST /demo/parse  {id}            the public demo: six bundled documents, nothing else
+  -> pdf-parse            text layer, if the PDF has one
+  -> pdftoppm + Tesseract otherwise: rasterize, then OCR with per-word confidence
+  -> extractor            Claude Haiku 4.5 when ANTHROPIC_API_KEY is set,
+                          a deterministic regex extractor when it is not
+  -> zod                  schema boundary; invalid output fails here
+  -> evidence             per field: ocr · source · arithmetic  -> verified | flagged
+  -> JSON + the raw source text
 
-GET /eval
-  5 invoice fixtures
-  -> extraction
-  -> field hit-rate + confidence report
+POST /parse                       the operator surface, sealed unless DEMO_MODE=false
+  takes a URL or an upload, persists every parse to SQLite, feeds a review queue
+  at GET /dashboard where low-confidence parses are corrected by hand
+
+GET /eval                         5 fixtures against ground truth, 67 fields
 ```
 
-## Tradeoffs
+## Verification
 
-### Tesseract.js vs managed Vision APIs
+| What | Value | When |
+|------|-------|------|
+| Tests | 28 pass, 0 fail | 2026-07-14 |
+| Eval, field hit rate | 67/67 fields, 1.000 (deterministic extractor) | 2026-07-14 |
+| Scan, page OCR confidence | 0.93 | 2026-07-14 |
+| Scan, fields marked | 2 of 18, both line quantities | 2026-07-14 |
+| Same invoice, born-digital PDF | 0 of 18 marked, no OCR | 2026-07-14 |
+| Image size | 123 MB | 2026-07-14 |
 
-Tesseract.js is the primary OCR path because it is self-hosted, cheap, inspectable, and works in Docker without sending invoice images to a third party. That matters for supplier invoices, logistics documents, and regulated customer data.
-
-Managed OCR such as Google Vision API, AWS Textract, or Azure Document Intelligence is the better production choice when handwriting, tables, rotated scans, multi-page invoices, or SLA-backed accuracy matter more than cost and data locality. This repo exposes `src/ocr/vision.ts` as the managed fallback boundary, but keeps it disabled by default.
-
-### Hono on Node/Docker vs Cloudflare Workers
-
-The runtime is Hono on Node via Bun. Cloudflare Workers are useful for routing and orchestration, but self-hosted Tesseract and PDF rasterization are a poor fit for Worker bundle size, CPU, filesystem, and native utility constraints. Docker is the deployable unit here; Workers can still call this service as an internal API.
-
-### Claude structured extraction vs regex
-
-Regex is reliable for the synthetic fixtures and remains as an offline fallback for tests. Claude Haiku 4.5 is used for the real extraction path because OCR output often shifts labels, table order, and address formatting. The schema boundary keeps the LLM output operational: invalid JSON fails fast instead of silently entering an accounting workflow.
-
-### Qdrant vs no document memory
-
-Qdrant is used as the optional vector memory layer, not as a replacement for OCR or structured extraction. When `QDRANT_URL` is configured, `/parse` retrieves similar prior invoices before extraction and stores the parsed result afterward. That gives vendor-specific examples to Claude and creates a reusable memory for recurring suppliers, purchase orders, and logistics documents.
-
-The demo uses deterministic local hash vectors so the repo works without another model provider. In production, replace `src/memory/embedding.ts` with OpenAI, Voyage, Cohere, or local embedding vectors and keep the Qdrant storage/search contract unchanged.
-
-Set `EMBEDDING_PROVIDER=openai` with `OPENAI_API_KEY` to use production OpenAI embeddings for Qdrant memory. The default `hash` provider stays deterministic for CI and local demos.
-
-### Intake desk vs one-shot parsing
-
-The live use case is an invoice intake triage desk. Every parse creates a persisted job in SQLite. Results below `REVIEW_CONFIDENCE_THRESHOLD` enter `needs_review`; the dashboard lets an operator edit the extracted invoice JSON and save it as `reviewed`. Reviewed corrections are stored back into Qdrant, so recurring vendor invoices improve over time.
-
-## Run
-
-```bash
-bun install
-bun run fixtures
-bun run dev
-```
-
-Open:
-
-```bash
-open http://localhost:8787/dashboard
-curl http://localhost:8787/eval
-curl -X POST http://localhost:8787/parse \
-  -F "file=@corpus/mustard-logistics-001.pdf"
-```
-
-Set `.dev.vars` or environment variables:
-
-```bash
-ANTHROPIC_API_KEY=sk-ant-api03-...
-ANTHROPIC_MODEL=claude-haiku-4-5
-VISION_API_ENABLED=false
-QDRANT_URL=http://localhost:6333
-QDRANT_COLLECTION=invoice_parse_agent
-EMBEDDING_PROVIDER=hash
-OPENAI_API_KEY=
-INVOICE_DB_PATH=data/invoices.sqlite
-REVIEW_CONFIDENCE_THRESHOLD=0.8
-```
-
-Without `ANTHROPIC_API_KEY`, the app uses a deterministic extractor so tests and demos stay reproducible.
-
-## Docker
+Reproduce the whole set with `bun test` and `bun run eval`. The marking is reproducible from the container alone:
 
 ```bash
 docker build -t invoice-parse-agent .
-docker run --rm -p 8787:8787 \
-  -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
-  -e ANTHROPIC_MODEL=claude-haiku-4-5 \
-  invoice-parse-agent
+docker run --rm -p 8787:8787 invoice-parse-agent
+curl -s -X POST http://localhost:8787/demo/parse \
+  -H 'content-type: application/json' -d '{"id":"mustard-logistics-001-scan"}'
 ```
 
-With Qdrant:
+The build itself runs OCR on a bundled scan and fails if it cannot, so an image that builds is an image whose OCR works. It also caches the language data, which means the container reads documents with no network at all: `docker run --network none` still parses the scan.
+
+## Limits
+
+- **The eval number is a regression guard, not a measurement of invoice extraction.** Five synthetic fixtures, read by a regex extractor written for exactly that layout, score 1.000 because they were built to. It tells you the pipeline still works; it tells you nothing about a real vendor's invoice.
+- **The demo accepts no upload and fetches no URL.** A public parse endpoint would fetch any URL it was handed, OCR any bytes it was handed at someone else's cost, and persist a stranger's invoice where the next visitor could read it. Those routes exist and are the point of the tool, and they are sealed in demo mode. Self-host and set `DEMO_MODE=false` to use them.
+- **Without `ANTHROPIC_API_KEY`, a regex extractor runs, not a model.** The console names whichever one produced the fields, so the page cannot claim a model it did not use. The screenshot above shows the fallback path.
+- **The `source` and `arithmetic` checks are weak on short numbers.** A quantity of 1 appears in almost any document, and 1 × 95 = 95 closes trivially. The checks are strongest where the values are distinctive.
+- **The corpus is synthetic and English.** No real company, invoice, or person is in it. All five tax IDs deliberately fail their country's VAT checksum, so none of them can belong to a real business. Line items, layouts, and vendors are invented.
+- **Six documents is not a document-understanding benchmark.** Handwriting, rotated scans, multi-page invoices, and table-heavy layouts are untested here.
+- **Scale-to-zero means a cold start.** The first visitor after a period of quiet waits for the container to wake.
+
+## Run it locally
 
 ```bash
-docker compose up --build
+bun install
+bun run demo    # the public console at :8787, upload and job routes sealed
+bun run dev     # the full operator surface: upload, review queue, dashboard
 ```
 
-The compose stack starts Qdrant on `localhost:6333` and the app on `localhost:8787`.
+`bun run dev` sets `DEMO_MODE=false`. Optional: `ANTHROPIC_API_KEY` for model extraction, `QDRANT_URL` for invoice memory across parses.
 
-## API
+## License
 
-### `POST /parse`
-
-Accepted inputs:
-
-- JSON URL: `{ "url": "https://..." }`
-- JSON text for controlled tests: `{ "text": "Vendor: ..." }`
-- multipart upload: field name `file`
-- raw PDF/image/text body
-
-Response shape:
-
-```json
-{
-  "source": { "mode": "pdf-text", "pages": 1, "bytes": 12345 },
-  "memory": { "provider": "qdrant", "collection": "invoice_parse_agent", "hits": 1, "stored": true },
-  "invoice": {
-    "vendor": { "name": "Mustard Yellow Logistics GmbH" },
-    "invoiceNumber": "MYL-2026-001",
-    "invoiceDate": "2026-04-30",
-    "lineItems": [],
-    "tax": { "amount": 59.09, "currency": "EUR" },
-    "total": { "amount": 370.09, "currency": "EUR" },
-    "confidence": 0.92,
-    "warnings": []
-  },
-  "rawText": "..."
-}
-```
-
-### `GET /eval`
-
-Runs the ground-truth corpus and returns per-case misses plus aggregate field hit rate.
-
-### `GET /dashboard`
-
-Serves a browser dashboard for upload, sample parsing, eval metrics, JSON output, review queue, editable corrections, and operational fit.
-
-### `GET /jobs`
-
-Lists recent invoice parse jobs for the review queue.
-
-### `GET /jobs/:id`
-
-Returns one persisted parse job with invoice JSON and raw OCR text.
-
-### `PATCH /jobs/:id`
-
-Accepts reviewed invoice JSON, marks the job `reviewed`, and stores the corrected invoice back into Qdrant when `QDRANT_URL` is configured.
-
-Current deterministic eval output:
-
-```bash
-bun run eval
-```
-
-## n8n integration
-
-`n8n-template.json` wires:
-
-```text
-Webhook -> /parse -> confidence gate -> email accounting / JSON response
-```
-
-This is the intended process-automation pattern: invoices enter via webhook, parsing is centralized, confidence gates decide whether to straight-through-process or send for review.
-
-## Quality gates
-
-```bash
-bun run typecheck
-bun test
-bun run eval
-```
-
-## Corpus
-
-The corpus uses synthetic invoices to avoid licensing ambiguity and to keep ground truth exact. The fixture names and fields are logistics-oriented: freight, cold chain, parts, terminal handling, and customs preparation.
-
-`corpus/mustard-logistics-001-scan.png` is a rendered scanned-image fixture. The OCR smoke test runs the actual Tesseract.js wrapper against it and checks confidence plus recovered invoice identifiers.
+MIT

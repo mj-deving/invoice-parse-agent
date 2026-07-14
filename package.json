@@ -5,7 +5,8 @@
   "type": "module",
   "description": "OCR and document parsing pipeline for invoice PDFs with structured JSON extraction.",
   "scripts": {
-    "dev": "bun run src/server.ts",
+    "dev": "DEMO_MODE=false bun run src/server.ts",
+    "demo": "bun run src/server.ts",
     "start": "bun run src/server.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test",

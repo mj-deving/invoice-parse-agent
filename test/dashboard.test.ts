@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { app } from "../src/server";
 
+// The dashboard is the operator surface, which the public demo seals. See test/demo.test.ts.
+process.env.DEMO_MODE = "false";
+
 describe("dashboard", () => {
   test("serves the browser proof dashboard", async () => {
     const response = await app.request("/dashboard");

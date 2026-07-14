@@ -15,6 +15,27 @@ function extractJson(text: string): unknown {
   return JSON.parse(match[0]);
 }
 
+export interface ActiveExtractor {
+  name: string;
+  detail: string;
+}
+
+/**
+ * Which extractor will actually run, so a surface can name it instead of claiming one.
+ * Without a key the deterministic regex path runs, and a page that showed "Claude" then
+ * would be lying about where its fields came from.
+ */
+export function activeExtractor(): ActiveExtractor {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return {
+      name: "deterministic fallback",
+      detail: "No ANTHROPIC_API_KEY is set, so fields come from the regex extractor, not a model."
+    };
+  }
+  const model = process.env.ANTHROPIC_MODEL ?? "claude-haiku-4-5";
+  return { name: model, detail: "Schema-constrained extraction, temperature 0." };
+}
+
 export async function extractInvoice(text: string, memory?: MemoryContext): Promise<Invoice> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {

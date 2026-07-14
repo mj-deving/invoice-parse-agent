@@ -5,3 +5,16 @@ coverage
 .env
 .dev.vars
 *.log
+
+# The local job database. Copying it would bake development parses into a public image.
+data
+
+# Not needed at runtime, and keeping them out keeps the build context small.
+docs
+test
+.github
+
+# The image installs its own language data from apt (see Dockerfile). Excluding the local
+# copy means the container takes the same path here as it does on a fresh clone, so OCR
+# cannot work on this machine and then quietly reach for a CDN in production.
+*.traineddata

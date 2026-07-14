@@ -2,6 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { app } from "../src/server";
 import { getJob, listJobs, resetJobsForTests } from "../src/jobs/store";
 
+// The review queue is the operator surface, which the public demo seals. See test/demo.test.ts.
+process.env.DEMO_MODE = "false";
+
 const text = `Vendor: Review Desk Logistics
 Invoice No: RDL-42
 Invoice Date: 2026-05-08

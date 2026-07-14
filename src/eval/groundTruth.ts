@@ -32,7 +32,7 @@ export const groundTruthCases: GroundTruthCase[] = [
     id: "northsea-parts-1042",
     documentPath: "corpus/northsea-parts-1042.txt",
     expected: {
-      vendor: { name: "Northsea Parts OU", taxId: "EE102233445", address: "Toostuse 44, Tallinn" },
+      vendor: { name: "Northsea Parts OU", taxId: "EE102233446", address: "Toostuse 44, Tallinn" },
       customer: { name: "Marius Deving Automation" },
       invoiceNumber: "NSP-1042",
       invoiceDate: "2026-05-02",

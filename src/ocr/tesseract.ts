@@ -5,7 +5,9 @@ import { randomUUID } from "node:crypto";
 import { createWorker } from "tesseract.js";
 import pdfParse from "pdf-parse";
 import { extractWithVisionFallback } from "./vision";
-import type { OcrOptions, TextExtractionResult } from "./types";
+import type { OcrLine, OcrOptions, TextExtractionResult } from "./types";
+
+type RecognizeBlocks = Awaited<ReturnType<Awaited<ReturnType<typeof createWorker>>["recognize"]>>["data"]["blocks"];
 
 function isPdf(bytes: Uint8Array): boolean {
   return new TextDecoder().decode(bytes.slice(0, 5)) === "%PDF-";
@@ -57,20 +59,55 @@ async function renderFirstPdfPage(bytes: Uint8Array): Promise<Uint8Array | null>
   return new Uint8Array(await png.arrayBuffer());
 }
 
-export async function extractWithTesseract(bytes: Uint8Array): Promise<TextExtractionResult> {
-  const worker = await createWorker("eng");
-  try {
-    const result = await worker.recognize(Buffer.from(bytes));
-    return {
-      text: result.data.text.trim(),
-      mode: "ocr",
-      pages: 1,
-      bytes: bytes.byteLength,
-      confidence: result.data.confidence / 100
-    };
-  } finally {
-    await worker.terminate();
+// Two Tesseract workers recognising at the same time tear down the WASM heap with
+// "access to a null reference" inside the emscripten binding, which takes the request
+// with it. Two visitors parsing a scan at once is not an exotic case for a public
+// service, so recognition is serialised: each call waits for the one before it.
+let ocrQueue: Promise<unknown> = Promise.resolve();
+
+function serialise<T>(work: () => Promise<T>): Promise<T> {
+  const result = ocrQueue.then(work, work);
+  ocrQueue = result.catch(() => undefined);
+  return result;
+}
+
+export function extractWithTesseract(bytes: Uint8Array): Promise<TextExtractionResult> {
+  return serialise(async () => {
+    const worker = await createWorker("eng");
+    try {
+      // `blocks` carries the per-word confidence. Without it Tesseract reports one
+      // number for the whole page, which cannot tell a clean field from a shaky one.
+      const result = await worker.recognize(Buffer.from(bytes), {}, { blocks: true, text: true });
+      return {
+        text: result.data.text.trim(),
+        mode: "ocr" as const,
+        pages: 1,
+        bytes: bytes.byteLength,
+        confidence: result.data.confidence / 100,
+        lines: collectLines(result.data.blocks)
+      };
+    } finally {
+      await worker.terminate();
+    }
+  });
+}
+
+function collectLines(blocks: RecognizeBlocks): OcrLine[] {
+  const lines: OcrLine[] = [];
+  for (const block of blocks ?? []) {
+    for (const paragraph of block.paragraphs ?? []) {
+      for (const line of paragraph.lines ?? []) {
+        const words = (line.words ?? []).map((word) => ({
+          text: word.text,
+          confidence: word.confidence / 100
+        }));
+        if (words.length > 0) {
+          lines.push({ text: line.text.trim(), words });
+        }
+      }
+    }
   }
+  return lines;
 }
 
 export async function extractTextFromDocument(
