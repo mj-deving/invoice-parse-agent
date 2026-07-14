@@ -109,24 +109,54 @@ describe("field evidence", () => {
     expect(unitPrice?.status).toBe("flagged");
   });
 
-  test("money written without a space, or with a symbol, or after the amount, still verifies", async () => {
-    // Forms the extractor already parses. The adjacency check must not invent a mark
-    // for a document that simply writes its money differently.
-    const forms = [
-      "ITEM 1: Compact code | qty=1 | unit=EUR410.00 | line=EUR410.00",
-      "ITEM 1: Trailing code | qty=1 | unit=410.00 EUR | line=410.00 EUR",
-      "ITEM 1: Symbol | qty=1 | unit=€410.00 | line=€410.00"
-    ];
-
-    for (const line of forms) {
-      const text = `Vendor: Rhein Freight Services AG\nInvoice No: RFS-778\nInvoice Date: 2026-04-28\n${line}\nTax: EUR 0.00\nTotal: EUR 410.00`;
-      const source = await extractTextFromDocument(new TextEncoder().encode(text), "text/plain");
-      const invoice = extractInvoiceDeterministically(source.text);
-      const report = buildEvidence(invoice, source);
-      const lineTotal = report.fields.find((field) => field.path === "lineItems.0.lineTotal");
-
-      expect(lineTotal?.checks.find((check) => check.name === "source")?.status).toBe("pass");
+  // Every amount below is distinct, so a passing source check can only have matched the
+  // line it is about. An earlier version of this test reused 410.00 for both the line and
+  // the invoice total, and would have passed on the total without touching the line at all.
+  async function lineTotalSource(line: string, override?: { amount: number; currency: string }) {
+    const text = `Vendor: Rhein Freight Services AG\nInvoice No: RFS-778\nInvoice Date: 2026-04-28\n${line}\nTax: EUR 7.00\nTotal: EUR 417.00`;
+    const source = await extractTextFromDocument(new TextEncoder().encode(text), "text/plain");
+    const invoice = extractInvoiceDeterministically(source.text);
+    if (override) {
+      invoice.lineItems[0]!.lineTotal = { ...override };
     }
+    const report = buildEvidence(invoice, source);
+    const field = report.fields.find((item) => item.path === "lineItems.0.lineTotal");
+    return { value: field?.value, source: field?.checks.find((check) => check.name === "source")?.status };
+  }
+
+  test("a currency code written straight against its amount still verifies", async () => {
+    const compact = await lineTotalSource("ITEM 1: Compact | qty=2 | unit=EUR205.00 | line=EUR410.00");
+    expect(compact.value).toBe("410.00 EUR");
+    expect(compact.source).toBe("pass");
+
+    const trailing = await lineTotalSource("ITEM 1: Trailing | qty=2 | unit=205.00 EUR | line=410.00 EUR");
+    expect(trailing.value).toBe("410.00 EUR");
+    expect(trailing.source).toBe("pass");
+  });
+
+  test("a currency symbol against its amount verifies, and a bare amount does not", async () => {
+    // The regex extractor cannot read "€410.00", so the money is set directly here: the
+    // check under test is whether the document's symbol form counts as evidence for it.
+    const euroSign = await lineTotalSource("ITEM 1: Symbol | qty=2 | unit=€205.00 | line=€410.00", {
+      amount: 410,
+      currency: "EUR"
+    });
+    expect(euroSign.source).toBe("pass");
+
+    // The same amount with no currency anywhere near it is not evidence that it is EUR.
+    const bare = await lineTotalSource("ITEM 1: Bare | qty=2 | unit=205.00 | line=410.00", {
+      amount: 410,
+      currency: "EUR"
+    });
+    expect(bare.source).toBe("fail");
+  });
+
+  test("a currency code buried in an identifier is not money", async () => {
+    const buried = await lineTotalSource("ITEM 1: Buried | qty=2 | unit=205.00 | line=ref123EUR410.00X", {
+      amount: 410,
+      currency: "EUR"
+    });
+    expect(buried.source).toBe("fail");
   });
 
   test("the scanned fixture flags the quantity Tesseract misread, and says why", async () => {

@@ -118,16 +118,15 @@ function currencyForms(currency: string): string[] {
 function containsMoney(haystack: string, money: Money): boolean {
   return currencyForms(money.currency).some((currency) => {
     const code = escapeRegex(currency);
-    // Guard a currency code against neighbouring LETTERS, not against digits: "EUR410.00"
-    // is a form the extractor accepts, and \b does not hold between "r" and "4" because
-    // both are word characters. A symbol needs no guard at all.
-    const alphabetic = /^[a-z]+$/.test(currency);
-    const open = alphabetic ? "(?<![a-z])" : "";
-    const close = alphabetic ? "(?![a-z])" : "";
+    // The code may sit straight against the amount, because "EUR410.00" is a form the
+    // extractor accepts. So the guard goes on the code's OUTER side only, and it excludes
+    // both letters and digits: otherwise "ref=123EUR410.00" would read as money. The side
+    // facing the amount needs no guard, since the amount carries its own digit boundaries.
+    const outer = /^[a-z]+$/.test(currency) ? ["(?<![a-z\\d])", "(?![a-z\\d])"] : ["", ""];
     return amountForms(money.amount).some((form) => {
       const amount = escapeRegex(form);
-      const before = new RegExp(`${open}${code}${close}\\s*(?<![\\d.,])${amount}(?![\\d.,])`);
-      const after = new RegExp(`(?<![\\d.,])${amount}(?![\\d.,])\\s*${open}${code}${close}`);
+      const before = new RegExp(`${outer[0]}${code}\\s*(?<![\\d.,])${amount}(?![\\d.,])`);
+      const after = new RegExp(`(?<![\\d.,])${amount}(?![\\d.,])\\s*${code}${outer[1]}`);
       return before.test(haystack) || after.test(haystack);
     });
   });
