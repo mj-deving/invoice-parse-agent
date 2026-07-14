@@ -118,12 +118,16 @@ function currencyForms(currency: string): string[] {
 function containsMoney(haystack: string, money: Money): boolean {
   return currencyForms(money.currency).some((currency) => {
     const code = escapeRegex(currency);
-    // A currency code is a word; a symbol is not, and \b would not hold against one.
-    const edge = /^[a-z]+$/.test(currency) ? "\\b" : "";
+    // Guard a currency code against neighbouring LETTERS, not against digits: "EUR410.00"
+    // is a form the extractor accepts, and \b does not hold between "r" and "4" because
+    // both are word characters. A symbol needs no guard at all.
+    const alphabetic = /^[a-z]+$/.test(currency);
+    const open = alphabetic ? "(?<![a-z])" : "";
+    const close = alphabetic ? "(?![a-z])" : "";
     return amountForms(money.amount).some((form) => {
       const amount = escapeRegex(form);
-      const before = new RegExp(`${edge}${code}${edge}\\s*(?<![\\d.,])${amount}(?![\\d.,])`);
-      const after = new RegExp(`(?<![\\d.,])${amount}(?![\\d.,])\\s*${edge}${code}${edge}`);
+      const before = new RegExp(`${open}${code}${close}\\s*(?<![\\d.,])${amount}(?![\\d.,])`);
+      const after = new RegExp(`(?<![\\d.,])${amount}(?![\\d.,])\\s*${open}${code}${close}`);
       return before.test(haystack) || after.test(haystack);
     });
   });

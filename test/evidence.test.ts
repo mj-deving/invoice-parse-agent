@@ -109,6 +109,26 @@ describe("field evidence", () => {
     expect(unitPrice?.status).toBe("flagged");
   });
 
+  test("money written without a space, or with a symbol, or after the amount, still verifies", async () => {
+    // Forms the extractor already parses. The adjacency check must not invent a mark
+    // for a document that simply writes its money differently.
+    const forms = [
+      "ITEM 1: Compact code | qty=1 | unit=EUR410.00 | line=EUR410.00",
+      "ITEM 1: Trailing code | qty=1 | unit=410.00 EUR | line=410.00 EUR",
+      "ITEM 1: Symbol | qty=1 | unit=€410.00 | line=€410.00"
+    ];
+
+    for (const line of forms) {
+      const text = `Vendor: Rhein Freight Services AG\nInvoice No: RFS-778\nInvoice Date: 2026-04-28\n${line}\nTax: EUR 0.00\nTotal: EUR 410.00`;
+      const source = await extractTextFromDocument(new TextEncoder().encode(text), "text/plain");
+      const invoice = extractInvoiceDeterministically(source.text);
+      const report = buildEvidence(invoice, source);
+      const lineTotal = report.fields.find((field) => field.path === "lineItems.0.lineTotal");
+
+      expect(lineTotal?.checks.find((check) => check.name === "source")?.status).toBe("pass");
+    }
+  });
+
   test("the scanned fixture flags the quantity Tesseract misread, and says why", async () => {
     const bytes = new Uint8Array(await Bun.file("corpus/mustard-logistics-001-scan.png").arrayBuffer());
     const source = await extractTextFromDocument(bytes, "image/png");
