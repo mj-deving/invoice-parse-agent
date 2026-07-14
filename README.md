@@ -43,7 +43,7 @@ GET /eval                         5 fixtures against ground truth, 67 fields
 
 | What | Value | When |
 |------|-------|------|
-| Tests | 28 pass, 0 fail | 2026-07-14 |
+| Tests | 34 pass, 0 fail | 2026-07-14 |
 | Eval, field hit rate | 67/67 fields, 1.000 (deterministic extractor) | 2026-07-14 |
 | Scan, page OCR confidence | 0.93 | 2026-07-14 |
 | Scan, fields marked | 2 of 18, both line quantities | 2026-07-14 |
