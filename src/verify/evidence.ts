@@ -93,6 +93,18 @@ function containsAny(haystack: string, needles: string[]): boolean {
   return needles.some((needle) => haystack.includes(normalize(needle)));
 }
 
+/** The written forms a currency takes. A document may print the code or the symbol. */
+const CURRENCY_SYMBOLS: Record<string, string[]> = {
+  EUR: ["eur", "€"],
+  GBP: ["gbp", "£"],
+  USD: ["usd", "$"]
+};
+
+function containsCurrency(haystack: string, currency: string): boolean {
+  const forms = CURRENCY_SYMBOLS[currency.toUpperCase()] ?? [currency.toLowerCase()];
+  return containsAny(haystack, forms);
+}
+
 /**
  * The OCR words that carry this field's value, scoped to the line it came from.
  * A string field matches on its word tokens; a number field matches on an exact
@@ -152,6 +164,26 @@ function textSourceCheck(haystack: string, forms: string[]): FieldCheck {
   return sourceCheck(containsAny(haystack, forms));
 }
 
+/**
+ * A money row displays "432.00 GBP". Checking only the number would certify the field
+ * while half of what it shows was never looked at, so an extractor that returned the
+ * right amount under the wrong currency would come back verified.
+ */
+function moneySourceCheck(haystack: string, money: Money): FieldCheck {
+  const amountFound = containsAmount(haystack, money.amount);
+  const currencyFound = containsCurrency(haystack, money.currency);
+  if (amountFound && currencyFound) {
+    return sourceCheck(true);
+  }
+  return {
+    name: "source",
+    status: "fail",
+    detail: amountFound
+      ? `the amount is in the source text, but ${money.currency} is not`
+      : "value is not in the source text"
+  };
+}
+
 function amountSourceCheck(haystack: string, amount: number): FieldCheck {
   return sourceCheck(containsAmount(haystack, amount));
 }
@@ -203,10 +235,15 @@ export function buildEvidence(invoice: Invoice, source: TextExtractionResult): E
 
     text(`${base}.description`, `${position} description`, item.description, lineMatcher);
 
+    // Amounts only mean something alongside the currency they are counted in, so the
+    // line has to agree with itself on both before its arithmetic is worth anything.
+    const sameCurrency = item.unitPrice.currency === item.lineTotal.currency;
     const closes = Math.abs(item.quantity * item.unitPrice.amount - item.lineTotal.amount) < MONEY_TOLERANCE;
     const math = arithmeticCheck(
-      closes,
-      `${item.quantity} x ${item.unitPrice.amount.toFixed(2)} ${closes ? "=" : "!="} ${item.lineTotal.amount.toFixed(2)}`
+      closes && sameCurrency,
+      sameCurrency
+        ? `${item.quantity} x ${item.unitPrice.amount.toFixed(2)} ${closes ? "=" : "!="} ${item.lineTotal.amount.toFixed(2)} ${item.lineTotal.currency}`
+        : `unit price is ${item.unitPrice.currency} but the line total is ${item.lineTotal.currency}`
     );
 
     fields.push(
@@ -219,37 +256,47 @@ export function buildEvidence(invoice: Invoice, source: TextExtractionResult): E
     fields.push(
       settle(`${base}.unitPrice`, `${position} unit price`, moneyLabel(item.unitPrice), [
         ocrCheck(source, lineMatcher, item.unitPrice.amount),
-        amountSourceCheck(haystack, item.unitPrice.amount),
+        moneySourceCheck(haystack, item.unitPrice),
         math
       ])
     );
     fields.push(
       settle(`${base}.lineTotal`, `${position} total`, moneyLabel(item.lineTotal), [
         ocrCheck(source, lineMatcher, item.lineTotal.amount),
-        amountSourceCheck(haystack, item.lineTotal.amount),
+        moneySourceCheck(haystack, item.lineTotal),
         math
       ])
     );
   });
 
+  // Summing amounts across currencies produces a number that means nothing, so the
+  // reconciliation only holds if the whole invoice is counted in one currency.
+  const currencies = new Set([
+    ...invoice.lineItems.map((item) => item.lineTotal.currency),
+    invoice.tax.currency,
+    invoice.total.currency
+  ]);
+  const oneCurrency = currencies.size === 1;
   const lineSum = invoice.lineItems.reduce((sum, item) => sum + item.lineTotal.amount, 0);
   const reconciles = Math.abs(lineSum + invoice.tax.amount - invoice.total.amount) < MONEY_TOLERANCE;
   const reconciliation = arithmeticCheck(
-    reconciles,
-    `${lineSum.toFixed(2)} lines + ${invoice.tax.amount.toFixed(2)} tax ${reconciles ? "=" : "!="} ${invoice.total.amount.toFixed(2)} total`
+    reconciles && oneCurrency,
+    oneCurrency
+      ? `${lineSum.toFixed(2)} lines + ${invoice.tax.amount.toFixed(2)} tax ${reconciles ? "=" : "!="} ${invoice.total.amount.toFixed(2)} ${invoice.total.currency}`
+      : `the invoice mixes ${[...currencies].join(", ")}, so its total cannot be reconciled`
   );
 
   fields.push(
     settle("tax", "Tax", moneyLabel(invoice.tax), [
       ocrCheck(source, /^tax\s*:/i, invoice.tax.amount),
-      amountSourceCheck(haystack, invoice.tax.amount),
+      moneySourceCheck(haystack, invoice.tax),
       reconciliation
     ])
   );
   fields.push(
     settle("total", "Total", moneyLabel(invoice.total), [
       ocrCheck(source, /^total\s*:/i, invoice.total.amount),
-      amountSourceCheck(haystack, invoice.total.amount),
+      moneySourceCheck(haystack, invoice.total),
       reconciliation
     ])
   );

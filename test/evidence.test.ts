@@ -64,6 +64,33 @@ describe("field evidence", () => {
     expect(total?.checks.find((check) => check.name === "arithmetic")?.status).toBe("fail");
   });
 
+  test("a money field whose currency is not the document's currency is flagged", async () => {
+    // The row displays "432.00 GBP". Checking only the number would certify the field
+    // while half of what it shows was never looked at.
+    const gbp = await Bun.file("corpus/alpine-spares-9201.txt").text();
+    const source = await extractTextFromDocument(new TextEncoder().encode(gbp), "text/plain");
+    const invoice = extractInvoiceDeterministically(source.text);
+    expect(invoice.total.currency).toBe("GBP");
+
+    invoice.total.currency = "EUR";
+    const report = buildEvidence(invoice, source);
+    const total = report.fields.find((field) => field.path === "total");
+
+    expect(total?.value).toContain("EUR");
+    expect(total?.status).toBe("flagged");
+  });
+
+  test("a line priced in a currency the invoice does not use is flagged", async () => {
+    const source = await extractTextFromDocument(new TextEncoder().encode(cleanText), "text/plain");
+    const invoice = extractInvoiceDeterministically(source.text);
+    invoice.lineItems[0]!.unitPrice.currency = "USD";
+
+    const report = buildEvidence(invoice, source);
+    const unitPrice = report.fields.find((field) => field.path === "lineItems.0.unitPrice");
+
+    expect(unitPrice?.status).toBe("flagged");
+  });
+
   test("the scanned fixture flags the quantity Tesseract misread, and says why", async () => {
     const bytes = new Uint8Array(await Bun.file("corpus/mustard-logistics-001-scan.png").arrayBuffer());
     const source = await extractTextFromDocument(bytes, "image/png");
