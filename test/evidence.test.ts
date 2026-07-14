@@ -91,6 +91,24 @@ describe("field evidence", () => {
     expect(unitPrice?.status).toBe("flagged");
   });
 
+  test("a currency mentioned elsewhere in the document does not vouch for this amount", async () => {
+    // The document names USD in its payment terms. That is not evidence that THIS line
+    // is priced in USD, so a currency found somewhere else must not verify the field.
+    const withPaymentTerms = `${cleanText}\nPayment terms: net 14 days. USD invoices are settled at the daily rate.`;
+    const source = await extractTextFromDocument(new TextEncoder().encode(withPaymentTerms), "text/plain");
+    const invoice = extractInvoiceDeterministically(source.text);
+
+    // Both sides of the line move together, so the line arithmetic still agrees with itself.
+    invoice.lineItems[0]!.unitPrice.currency = "USD";
+    invoice.lineItems[0]!.lineTotal.currency = "USD";
+
+    const report = buildEvidence(invoice, source);
+    const unitPrice = report.fields.find((field) => field.path === "lineItems.0.unitPrice");
+
+    expect(unitPrice?.checks.find((check) => check.name === "source")?.status).toBe("fail");
+    expect(unitPrice?.status).toBe("flagged");
+  });
+
   test("the scanned fixture flags the quantity Tesseract misread, and says why", async () => {
     const bytes = new Uint8Array(await Bun.file("corpus/mustard-logistics-001-scan.png").arrayBuffer());
     const source = await extractTextFromDocument(bytes, "image/png");

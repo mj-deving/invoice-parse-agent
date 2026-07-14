@@ -100,9 +100,33 @@ const CURRENCY_SYMBOLS: Record<string, string[]> = {
   USD: ["usd", "$"]
 };
 
-function containsCurrency(haystack: string, currency: string): boolean {
-  const forms = CURRENCY_SYMBOLS[currency.toUpperCase()] ?? [currency.toLowerCase()];
-  return containsAny(haystack, forms);
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function currencyForms(currency: string): string[] {
+  return CURRENCY_SYMBOLS[currency.toUpperCase()] ?? [currency.toLowerCase()];
+}
+
+/**
+ * Is this amount written in this currency, in this document?
+ *
+ * The currency has to sit against the amount. A currency found anywhere in the document
+ * is not evidence about THIS amount: an invoice that names USD in its payment terms
+ * would otherwise vouch for a line item the extractor mislabelled USD.
+ */
+function containsMoney(haystack: string, money: Money): boolean {
+  return currencyForms(money.currency).some((currency) => {
+    const code = escapeRegex(currency);
+    // A currency code is a word; a symbol is not, and \b would not hold against one.
+    const edge = /^[a-z]+$/.test(currency) ? "\\b" : "";
+    return amountForms(money.amount).some((form) => {
+      const amount = escapeRegex(form);
+      const before = new RegExp(`${edge}${code}${edge}\\s*(?<![\\d.,])${amount}(?![\\d.,])`);
+      const after = new RegExp(`(?<![\\d.,])${amount}(?![\\d.,])\\s*${edge}${code}${edge}`);
+      return before.test(haystack) || after.test(haystack);
+    });
+  });
 }
 
 /**
@@ -170,16 +194,14 @@ function textSourceCheck(haystack: string, forms: string[]): FieldCheck {
  * right amount under the wrong currency would come back verified.
  */
 function moneySourceCheck(haystack: string, money: Money): FieldCheck {
-  const amountFound = containsAmount(haystack, money.amount);
-  const currencyFound = containsCurrency(haystack, money.currency);
-  if (amountFound && currencyFound) {
+  if (containsMoney(haystack, money)) {
     return sourceCheck(true);
   }
   return {
     name: "source",
     status: "fail",
-    detail: amountFound
-      ? `the amount is in the source text, but ${money.currency} is not`
+    detail: containsAmount(haystack, money.amount)
+      ? `the amount is in the source text, but not as ${money.currency}`
       : "value is not in the source text"
   };
 }
