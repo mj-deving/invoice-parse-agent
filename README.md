@@ -2,7 +2,7 @@
 
 Invoices become structured JSON, and every field is checked back against the document it came from, so the ones the pipeline was not sure about are marked instead of quietly passed on.
 
-**Live:** <https://invoice-parse-agent.up.railway.app> · **Stack:** Bun · Hono · poppler · Tesseract · zod
+**Live:** <https://invoice-parse-agent-production.up.railway.app> · **Stack:** Bun · Hono · poppler · Tesseract · zod
 
 ![invoice-parse-agent console, showing two extracted quantities marked because Tesseract read them under the confidence floor](docs/screenshot.png)
 
