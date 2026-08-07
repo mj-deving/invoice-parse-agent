@@ -2,6 +2,7 @@
   "name": "invoice-parse-agent",
   "version": "0.1.0",
   "private": false,
+  "license": "MIT",
   "type": "module",
   "description": "OCR and document parsing pipeline for invoice PDFs with structured JSON extraction.",
   "scripts": {
